@@ -1,0 +1,58 @@
+# Environnement virtuel
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Données locales (chemins perso)
+dashboard.xlsx
+dashboard.csv
+*.xlsx
+*.csv
+
+# Clés SSH et secrets
+*.pem
+*.key
+id_rsa
+id_ed25519
+.env
+secrets.py
+
+# Chemins locaux / config perso
+data.py
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Clés SSH
+Y.ssh
+Y.ssh.pub
+*.ssh
+*.ssh.pub
+*.pem
+*.key
+
+# Données locales
+dashboard.xlsx
+dashboard.csv
+*.csv
+*.xlsx
+
+# Notebooks perso
+*.ipynb
+.ipynb_checkpoints/
+
+# Environnement
+.venv/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db
