@@ -1,3 +1,4 @@
+import os
 from dash import Dash, Output, Input
 import dash_bootstrap_components as dbc
 
@@ -6,17 +7,16 @@ from style import THEME
 from layouts import create_layout
 from callbacks import register_callbacks
 
-
+# Chargement des données UNE SEULE FOIS au démarrage
+df = load_data()
 
 def create_app():
-    df = load_data()
-
     external_scripts = [
         "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
         "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
     ]
 
-    app = Dash( 
+    app = Dash(
         __name__,
         requests_pathname_prefix="/copublications-dashboard/",
         routes_pathname_prefix="/copublications-dashboard/",
@@ -26,13 +26,9 @@ def create_app():
         meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
     )
     app.title = "Copublications Inria"
-
     app.layout = create_layout(df)
-
-    # ✅ Callbacks Python
     register_callbacks(app, df)
 
-    # Callback client pour le mode sombre
     app.clientside_callback(
         """
         function(n) {
@@ -56,7 +52,8 @@ def create_app():
     return app
 
 
+app = create_app()
+server = app.server
+
 if __name__ == "__main__":
-    app = create_app()
-    server = app.server
-    app.run(debug=True)
+    app.run(debug=False)
