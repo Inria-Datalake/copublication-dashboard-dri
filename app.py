@@ -16,10 +16,12 @@ def create_app():
         "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
     ]
 
-    app = Dash(
+    app = Dash( 
         __name__,
+        requests_pathname_prefix="/copublications-dashboard/",
         external_stylesheets=[THEME],
-        external_scripts=external_scripts,suppress_callback_exceptions=True,
+        external_scripts=external_scripts,
+        suppress_callback_exceptions=True,
         meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
     )
     app.title = "Copublications Inria"
