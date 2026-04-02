@@ -19,8 +19,7 @@ id_ed25519
 .env
 secrets.py
 
-# Chemins locaux / config perso
-data.py
+
 
 # IDE
 .vscode/
