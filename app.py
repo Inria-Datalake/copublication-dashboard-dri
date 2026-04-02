@@ -19,6 +19,7 @@ def create_app():
     app = Dash( 
         __name__,
         requests_pathname_prefix="/copublications-dashboard/",
+        routes_pathname_prefix="/copublications-dashboard/",
         external_stylesheets=[THEME],
         external_scripts=external_scripts,
         suppress_callback_exceptions=True,
