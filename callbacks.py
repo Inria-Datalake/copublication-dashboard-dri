@@ -1290,7 +1290,7 @@ def register_callbacks(app, df_base):
 
         # ── Layout ressort ──
         k = 0.45 + 0.02 * math.log(G.number_of_nodes() + 1)
-        pos = nx.spring_layout(G, k=k, iterations=80, seed=42)
+        pos = nx.spring_layout(G, k=k, iterations=30, seed=42)
         coords = np.array(list(pos.values()))
         max_abs = np.abs(coords).max()
         if max_abs > 0: coords = coords / max_abs
