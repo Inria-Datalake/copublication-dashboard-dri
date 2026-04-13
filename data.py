@@ -6,7 +6,7 @@ import pandas as pd
 BASE_DIR = Path(__file__).parent
 
 XLSX_PATH = BASE_DIR / "dashboard_dri_v2.xlsx"
-CSV_PATH  = BASE_DIR / "Copublis_dashboard.csv"
+CSV_PATH  = BASE_DIR / "dashboard_dri_v2.csv"
 
 
 def create_csv_from_xlsx(xlsx_path=XLSX_PATH, csv_path=CSV_PATH, sheet_name=0, force=False):
