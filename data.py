@@ -5,7 +5,7 @@ import pandas as pd
 # 📌 Chemins corrigés
 BASE_DIR = Path(__file__).parent
 
-XLSX_PATH = BASE_DIR / "dashboard_dri.xlsx"
+XLSX_PATH = BASE_DIR / "dashboard_dri_v2.xlsx"
 CSV_PATH  = BASE_DIR / "Copublis_dashboard.csv"
 
 
