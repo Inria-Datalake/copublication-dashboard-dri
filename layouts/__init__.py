@@ -402,11 +402,11 @@ def create_layout(df):
                                     html.Img(
                                         src=LOGO_INRIA,
                                         style={
-                                            "height": "30px",
+                                            "height": "18px",
                                             "maxWidth": "120px",
                                             "objectFit": "contain",
                                             "filter": "brightness(0) invert(1)",
-                                            "opacity": "0.95",
+                                            "opacity": "0.55",
                                             "flexShrink": "0",
                                         },
                                     ),
@@ -418,11 +418,11 @@ def create_layout(df):
                                     html.Img(
                                         src=LOGO_DATALAKE,
                                         style={
-                                            "height": "28px",
+                                            "height": "18px",
                                             "maxWidth": "110px",
                                             "objectFit": "contain",
                                             "filter": "brightness(0) invert(1)",
-                                            "opacity": "0.88",
+                                            "opacity": "0.55",
                                             "flexShrink": "0",
                                         },
                                     ),
@@ -483,20 +483,18 @@ def create_layout(df):
                                 ],
                             ),
 
-                            # ── Section Équipe ────────────────
-                            _sb_section("Équipe"),
-                            _sb_credit("Données & Analyses",
-                                       "Kumar Guha · Daniel Da Silva · Andréa Nebot"),
-                            _sb_credit("Visualisations", "Andréa Nebot"),
-                            _sb_credit("Groupe", "Datalake · Inria"),
-
                             # ── Section À propos ──────────────
                             _sb_section("À propos"),
                             html.P(
-                                "Le groupe Datalake, créé en 2022 au sein de la DCIS "
-                                "d'Inria, développe des outils d'analyse croisée entre "
-                                "HAL et divers référentiels. Cet outil a été réalisé à "
-                                "la demande de la DRI.",
+                                "Le groupe Datalake, créé en 2022 au sein de la Direction de la culture et de l'information scientifique d'Inria,"
+                                "travaille à rendre possible le croisement de données entre HAL et divers référentiels, "
+                                "et de développer des outils d’analyse "
+                                "pour les acteurs scientifiques et décisionnaires."
+                                "Il est constitué de 6 membres : data scientists, développeurs et documentalistes experts."
+                                "Le présent outil a été développé à la demande et en collaboration"
+                                "avec deux scientifiques membres du réseau Direction des relations internationales (DRI),"
+                                "Luigi Liquori (Sophia) et Maria Kazolea (Bordeaux)."
+                                "Il a ensuite été amélioré à la demande de la DRI.",
                                 style={
                                     "fontSize": "10.5px",
                                     "color": "rgba(255,255,255,0.72)",
@@ -504,6 +502,13 @@ def create_layout(df):
                                 },
                             ),
 
+                            # ── Section Équipe ────────────────
+                            _sb_section("Équipe"),
+                            _sb_credit("Données & Analyses",
+                                       "Kumar Guha · Daniel Da Silva · Andréa Nebot"),
+                            _sb_credit("Visualisations", "Andréa Nebot"),
+                            _sb_credit("Groupe", "Datalake · Inria"),
+                            
                             # ── Section Exports ───────────────
                             _sb_section("Exports"),
                             dcc.Download(id="download-csv"),
