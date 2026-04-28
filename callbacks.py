@@ -1747,7 +1747,7 @@ def register_callbacks(app, df_base):
         centres, equipes, pays, villes, orgs, annees, tab, stored_data
     ):
         # On ne calcule l'onglet que lorsqu'il est actif
-        if tab != "tab-evolution":
+        if tab != "tab-evolution" and tab is not None:
             return no_update, no_update, no_update, no_update, no_update
 
         # Choix du dataframe (CSV chargé ou df initial)

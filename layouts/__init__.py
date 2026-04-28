@@ -125,7 +125,7 @@ def create_layout(df):
     topnav = html.Div(
         className="inria-topnav inria-anim",
         children=[
-            html.Span("COPUBLICATIONS INRIA", className="inria-topnav-brand"),
+            html.Span("Tableau de bord ", className="inria-topnav-brand"),
             html.Div(className="inria-topnav-sep"),
             html.Span("Groupe Datalake", className="inria-topnav-sub"),
             html.Div(className="inria-topnav-spacer"),
@@ -153,11 +153,7 @@ def create_layout(df):
         className="inria-hero inria-anim inria-anim-2",
         children=[
             html.Div(
-                className="inria-eyebrow",
-                children=[
-                    html.Span(className="inria-eyebrow-dash"),
-                    "Tableau de bord · Groupe Datalake",
-                ],
+                className="inria-eyebrow"
             ),
             html.H1("Copublications internationales"),
             html.P(
