@@ -16,8 +16,9 @@ OFF    = "#f8f8f6"
 BORDER = "#e4e4e0"
 MUTED  = "#888880"
 
-LOGO_INRIA    = "/copublications-dashboard/assets/logo_inria.png"
-LOGO_DATALAKE = "/copublications-dashboard/assets/logo_datalake.png"
+LOGO_INRIA    = "https://raw.githubusercontent.com/Inria-Datalake/copublications-dashboard/refs/heads/main/assets/logo_inria.png"
+LOGO_DATALAKE = "https://raw.githubusercontent.com/Inria-Datalake/copublications-dashboard/refs/heads/main/assets/logo_datalake.png"
+LOGO_DATA= "https://raw.githubusercontent.com/Inria-Datalake/copublications-dashboard/refs/heads/main/assets/logo_data.png"
 
 
 def _sb_section(title):
@@ -124,7 +125,6 @@ def create_layout(df):
     topnav = html.Div(
         className="inria-topnav inria-anim",
         children=[
-            html.Img(src=LOGO_INRIA, style={"height": "22px", "marginRight": "12px"}),
             html.Span("COPUBLICATIONS INRIA", className="inria-topnav-brand"),
             html.Div(className="inria-topnav-sep"),
             html.Span("Groupe Datalake", className="inria-topnav-sub"),
@@ -441,7 +441,7 @@ def create_layout(df):
                                     "marginBottom": "20px",
                                 },
                                 children=[
-                                    html.Div("COPUBLICATIONS INRIA", style={
+                                    html.Div("COPUBLICATIONS  INRIA", style={
                                         "fontSize": "14px", "fontWeight": "700",
                                         "fontFamily": "'Source Serif 4', Georgia, serif",
                                         "color": "white", "letterSpacing": "0.02em",
@@ -490,7 +490,7 @@ def create_layout(df):
                             # ── Section Équipe ────────────────
                             _sb_section("Équipe"),
                             _sb_credit("Données & Analyses",
-                                       "Kumar Guha · Daniel Da Silva"),
+                                       "Kumar Guha · Daniel Da Silva · Andréa Nebot"),
                             _sb_credit("Visualisations", "Andréa Nebot"),
                             _sb_credit("Groupe", "Datalake · Inria"),
 
