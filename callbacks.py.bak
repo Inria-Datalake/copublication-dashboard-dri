@@ -262,29 +262,16 @@ def register_callbacks(app, df_base):
         )
 
     # ========================================================
-    # 0 — SIDEBAR (html.Div custom — pas dbc.Offcanvas)
+    # 0 — SIDEBAR
     # ========================================================
     @app.callback(
-        Output("sidebar", "style"),
-        [
-            Input("sidebar-toggle",  "n_clicks"),
-            Input("sidebar-close",   "n_clicks"),
-        ],
-        State("sidebar", "style"),
+        Output("sidebar", "is_open"),
+        Input("sidebar-toggle", "n_clicks"),
+        State("sidebar", "is_open"),
         prevent_initial_call=True,
     )
-    def toggle_sidebar(open_clicks, close_clicks, current_style):
-        ctx = dash.callback_context
-        if not ctx.triggered:
-            return current_style or {"display": "none"}
-        trigger = ctx.triggered[0]["prop_id"].split(".")[0]
-        if trigger == "sidebar-toggle":
-            # Bascule ouvert/fermé
-            if current_style and current_style.get("display") == "block":
-                return {"display": "none"}
-            return {"display": "block"}
-        # sidebar-close → toujours fermer
-        return {"display": "none"}
+    def toggle_sidebar(n_clicks, is_open):
+        return not is_open if n_clicks else is_open
 
     # ========================================================
     # 0bis — Export CSV → téléchargement
@@ -448,7 +435,7 @@ def register_callbacks(app, df_base):
         )
 
         centre_counts = (
-            dff.groupby("Centre", observed=True)["HalID"]
+            dff.groupby("Centre")["HalID"]
             .nunique()
             .sort_values(ascending=False)
         )
@@ -481,7 +468,7 @@ def register_callbacks(app, df_base):
 
         # ==================== BARRES PAR ANNÉE ====================
         pubs_by_year = (
-            dff.groupby("Année", observed=True)["HalID"]
+            dff.groupby("Année")["HalID"]
             .nunique()
             .reset_index(name="Publications")
         )
@@ -574,17 +561,17 @@ def register_callbacks(app, df_base):
             return fig
 
         fig_pays = top_bar_rounded(
-            dff.groupby("Pays", observed=True)["HalID"].nunique().reset_index(name="Publications"),
+            dff.groupby("Pays")["HalID"].nunique().reset_index(name="Publications"),
             "Pays",
         )
 
         fig_villes = top_bar_rounded(
-            dff.groupby("Ville", observed=True)["HalID"].nunique().reset_index(name="Publications"),
+            dff.groupby("Ville")["HalID"].nunique().reset_index(name="Publications"),
             "Ville",
         )
 
         fig_orgs = top_bar_rounded(
-            dff.groupby("Organisme_copubliant", observed=True)["HalID"]
+            dff.groupby("Organisme_copubliant")["HalID"]
             .nunique()
             .reset_index(name="Publications"),
             "Organisme_copubliant",
@@ -594,7 +581,7 @@ def register_callbacks(app, df_base):
         # ====================== CARTE MONDIALE ======================
         map_df = (
             dff.dropna(subset=["Latitude", "Longitude"])
-            .groupby(["Ville", "Pays", "Latitude", "Longitude"], observed=True)["HalID"]
+            .groupby(["Ville", "Pays", "Latitude", "Longitude"])["HalID"]
             .nunique()
             .reset_index(name="Publications")
         )
@@ -696,7 +683,7 @@ def register_callbacks(app, df_base):
                     continue
 
                 flow_df = (
-                    flow_raw.groupby(["Ville", "Pays", "Latitude", "Longitude"], observed=True)
+                    flow_raw.groupby(["Ville", "Pays", "Latitude", "Longitude"])
                     .agg(
                         Publications=("HalID", "nunique"),
                         UE_flag=(
@@ -1785,7 +1772,7 @@ def register_callbacks(app, df_base):
         # =========================================================================
         if all(col in dff.columns for col in ["Centre", "Equipe", "Organisme_copubliant"]):
             sun_df = (
-                dff.groupby(["Centre", "Equipe", "Organisme_copubliant"], observed=True)["HalID"]
+                dff.groupby(["Centre", "Equipe", "Organisme_copubliant"])["HalID"]
                 .nunique()
                 .reset_index(name="Publications")
             )
@@ -1814,7 +1801,7 @@ def register_callbacks(app, df_base):
         # =========================================================================
         if all(col in dff.columns for col in ["Année", "Equipe"]):
             team_df = (
-                dff.groupby(["Année", "Equipe"], observed=True)["HalID"]
+                dff.groupby(["Année", "Equipe"])["HalID"]
                 .nunique()
                 .reset_index(name="Publications")
             )
@@ -1848,7 +1835,7 @@ def register_callbacks(app, df_base):
         # =========================================================================
         if all(col in dff.columns for col in ["Centre", "Pays", "Organisme_copubliant"]):
             sankey_df = (
-                dff.groupby(["Centre", "Pays", "Organisme_copubliant"], observed=True)["HalID"]
+                dff.groupby(["Centre", "Pays", "Organisme_copubliant"])["HalID"]
                 .nunique()
                 .reset_index(name="Publications")
                 .sort_values("Publications", ascending=False)
@@ -1925,7 +1912,7 @@ def register_callbacks(app, df_base):
         if "Centre" in dff.columns and "Domaine(s)" in dff.columns:
             dom_df = (
                 dff.dropna(subset=["Centre", "Domaine(s)"])
-                .groupby(["Centre", "Domaine(s)"], observed=True)["HalID"]
+                .groupby(["Centre", "Domaine(s)"])["HalID"]
                 .nunique()
                 .reset_index(name="Publications")
             )
@@ -1943,7 +1930,7 @@ def register_callbacks(app, df_base):
                     ]
                 else:
                     centres_to_plot = (
-                        dom_df.groupby("Centre", observed=True)["Publications"]
+                        dom_df.groupby("Centre")["Publications"]
                         .sum()
                         .sort_values(ascending=False)
                         .head(5)
@@ -1951,7 +1938,7 @@ def register_callbacks(app, df_base):
                     )
                 if not centres_to_plot:
                     centres_to_plot = (
-                        dom_df.groupby("Centre", observed=True)["Publications"]
+                        dom_df.groupby("Centre")["Publications"]
                         .sum()
                         .sort_values(ascending=False)
                         .head(5)
@@ -1960,7 +1947,7 @@ def register_callbacks(app, df_base):
 
                 # ── Top domaines — on prend jusqu'à 8 pour plus de détail ──
                 top_dom = (
-                    dom_df.groupby("Domaine(s)", observed=True)["Publications"]
+                    dom_df.groupby("Domaine(s)")["Publications"]
                     .sum()
                     .sort_values(ascending=False)
                     .head(8)
@@ -1974,7 +1961,7 @@ def register_callbacks(app, df_base):
                 # ── Normalisation en % pour comparer centres de tailles différentes ──
                 centre_totals = (
                     dom_df[dom_df["Centre"].isin(centres_to_plot)]
-                    .groupby("Centre", observed=True)["Publications"]
+                    .groupby("Centre")["Publications"]
                     .sum()
                     .to_dict()
                 )
@@ -2227,7 +2214,7 @@ def register_callbacks(app, df_base):
 
         # ── Top N pays (par volume total) ──
         top_pays_list = (
-            dff.groupby("Pays", observed=True)["HalID"]
+            dff.groupby("Pays")["HalID"]
             .nunique()
             .sort_values(ascending=False)
             .head(top_n)
@@ -2237,7 +2224,7 @@ def register_callbacks(app, df_base):
 
         # ── 1) Graphique ligne : évolution par an et par pays ──
         line_df = (
-            dff_top.groupby(["Année", "Pays"], observed=True)["HalID"]
+            dff_top.groupby(["Année", "Pays"])["HalID"]
             .nunique()
             .reset_index(name="Publications")
             .sort_values("Année")
@@ -2279,7 +2266,7 @@ def register_callbacks(app, df_base):
 
         # ── 2) Heatmap pays × année ──
         pivot_df = (
-            dff_top.groupby(["Pays", "Année"], observed=True)["HalID"]
+            dff_top.groupby(["Pays", "Année"])["HalID"]
             .nunique()
             .unstack(fill_value=0)
         )
@@ -2321,7 +2308,7 @@ def register_callbacks(app, df_base):
 
         # ── 3) Barres horizontales : volume total par pays ──
         bar_df = (
-            dff_top.groupby("Pays", observed=True)["HalID"]
+            dff_top.groupby("Pays")["HalID"]
             .nunique()
             .reset_index(name="Publications")
             .sort_values("Publications", ascending=True)
@@ -2453,7 +2440,7 @@ def register_callbacks(app, df_base):
             else:
                 # Pas de sélection explicite → top 8 valeurs du df filtré
                 grp = (
-                    df_sel.groupby(col, observed=True)["HalID"]
+                    df_sel.groupby(col)["HalID"]
                     .nunique()
                     .sort_values(ascending=False)
                     .head(8)
@@ -2526,7 +2513,7 @@ def register_callbacks(app, df_base):
         else:
             # Total global par année
             ann_global = (
-                df_global.groupby("Année", observed=True)["HalID"]
+                df_global.groupby("Année")["HalID"]
                 .nunique()
                 .reset_index(name="Total_global")
             )
@@ -2553,7 +2540,7 @@ def register_callbacks(app, df_base):
             for col, vals, dim_label in traces_def:
                 if col == "__global__":
                     ann_sel = (
-                        dff.groupby("Année", observed=True)["HalID"]
+                        dff.groupby("Année")["HalID"]
                         .nunique()
                         .reset_index(name="n_sel")
                     )
@@ -2576,7 +2563,7 @@ def register_callbacks(app, df_base):
                     for val in (vals or []):
                         ann_sel = (
                             dff[dff[col].astype(str) == str(val)]
-                            .groupby("Année", observed=True)["HalID"]
+                            .groupby("Année")["HalID"]
                             .nunique()
                             .reset_index(name="n_sel")
                         )

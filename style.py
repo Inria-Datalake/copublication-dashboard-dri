@@ -31,11 +31,11 @@ MAGENTA_2 = "#c157a1"
 MAGENTA_3 = "#d288bd"
 MAGENTA_4 = "#eccfe5"
 
-# Rouge
-RED_1 = "#c9191e"
-RED_2 = "#d95e61"
-RED_3 = "#e58c8e"
-RED_4 = "#f5d1d1"
+# Bleu marine (remplace rouge)
+RED_1 = "#0e2c5e"   # bleu marine foncé
+RED_2 = "#1d4e8f"
+RED_3 = "#5580b8"
+RED_4 = "#d0dff0"
 
 # === COULEURS PRINCIPALES ===
 PRIMARY = INDIGO_1

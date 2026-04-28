@@ -1,55 +1,412 @@
-/* --------- Onglets style "bulle" --------- */
+/* =============================================================
+   INRIA Dashboard — Style officiel INRIA
+   Palette : rouge #e63312 · navy #1b2a4a · blanc · gris clair
+   ============================================================= */
 
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap');
+
+:root {
+  --red:        #e63312;
+  --navy:       #1b2a4a;
+  --white:      #ffffff;
+  --off:        #f8f8f6;
+  --border:     #e4e4e0;
+  --muted:      #888880;
+  --serif:      'Source Serif 4', Georgia, serif;
+  --sans:       'Source Sans 3', Helvetica, Arial, sans-serif;
+  --sidebar-w:  44px;   /* barre rouge fixe */
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: var(--sans);
+  color: var(--navy);
+  background: var(--white);
+  margin: 0; padding: 0;
+}
+
+/* ════════════════════════════════════════════
+   BARRE ROUGE VERTICALE FIXE (44 px)
+   ════════════════════════════════════════════ */
+.inria-sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--red);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0 14px;
+}
+
+/* ════════════════════════════════════════════
+   WRAPPER PRINCIPAL (décalé de 44 px)
+   ════════════════════════════════════════════ */
+.inria-main {
+  margin-left: var(--sidebar-w);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ════════════════════════════════════════════
+   TOP NAV
+   ════════════════════════════════════════════ */
+.inria-topnav {
+  height: 46px;
+  min-height: 46px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  background: var(--white);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  gap: 0;
+}
+
+.inria-topnav-brand {
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 0.02em;
+}
+
+.inria-topnav-sep {
+  width: 1px; height: 16px;
+  background: var(--border);
+  margin: 0 14px;
+}
+
+.inria-topnav-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.inria-topnav-spacer { flex: 1; }
+
+/* ════════════════════════════════════════════
+   CONTENU PRINCIPAL PLEINE LARGEUR
+   (plus de panneau gauche fixe — tout dans sidebar)
+   ════════════════════════════════════════════ */
+.inria-content-full {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+/* ════════════════════════════════════════════
+   BLOC HERO
+   ════════════════════════════════════════════ */
+.inria-hero {
+  padding: 22px 32px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+}
+
+.inria-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--red);
+  margin-bottom: 10px;
+}
+
+.inria-eyebrow-dash {
+  display: inline-block;
+  width: 18px; height: 2px;
+  background: var(--red);
+}
+
+.inria-hero h1 {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--navy);
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+}
+
+.inria-hero-intro {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #4a5268;
+  max-width: 700px;
+  margin-bottom: 14px;
+}
+
+/* ════════════════════════════════════════════
+   BLOC FILTRES
+   ════════════════════════════════════════════ */
+.inria-filter-block {
+  background: var(--off);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 32px;
+}
+
+.inria-filter-label {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--red);
+  margin-bottom: 8px;
+}
+
+/* Labels filtres */
+label.mb-1 {
+  color: var(--navy) !important;
+  font-weight: 700 !important;
+  font-size: 8px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+}
+
+/* Dropdown Dash */
+.Select-control,
+.dcc-dropdown .Select-control {
+  border: 1.5px solid var(--border) !important;
+  border-radius: 0 !important;
+  font-size: 11px !important;
+  font-family: var(--sans) !important;
+  background: var(--white) !important;
+  min-height: 30px !important;
+}
+.Select-control:hover  { border-color: var(--red) !important; }
+
+.Select--multi .Select-value {
+  background: var(--navy) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 9.5px !important;
+}
+.Select--multi .Select-value-icon:hover { background: var(--red) !important; }
+
+/* ════════════════════════════════════════════
+   ONGLETS — style INRIA (ligne rouge dessous)
+   ════════════════════════════════════════════ */
 .custom-tabs {
-    border-bottom: none;
-    margin-top: 10px;
+  border-bottom: 2px solid var(--border) !important;
+  background: var(--white) !important;
+  padding: 0 32px !important;
+  margin: 0 !important;
+  display: flex !important;
+  gap: 0 !important;
 }
 
 .custom-tab {
-    border-radius: 999px 999px 0 0;
-    background-color: #f5f7fb;
-    padding: 8px 18px !important;
-    margin-right: 6px !important;
-    border: 1px solid rgba(0,0,0,0.05) !important;
-    border-bottom: none !important;
-    font-weight: 500;
-    color: #4b4f63 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 11px 18px !important;
+  margin: 0 !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  font-family: var(--sans) !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  color: var(--muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: color 0.15s, border-color 0.15s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.custom-tab:hover {
+  color: var(--navy) !important;
+  background: var(--off) !important;
 }
 
 .custom-tab--selected {
-    background: linear-gradient(135deg, #27348b 0%, #00a5cc 90%);
-    color: white !important;
-    border: 1px solid rgba(0,0,0,0.15) !important;
-    border-bottom: none !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  color: var(--red) !important;
+  border-bottom: 3px solid var(--red) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-/* --------- Cartes (graphs, KPI, filtres) --------- */
-
+/* ════════════════════════════════════════════
+   CARTES GRAPHIQUES
+   ════════════════════════════════════════════ */
 .card,
 .dash-bootstrap .card {
-    border-radius: 18px !important;
-    border: 1px solid rgba(15, 23, 42, 0.05) !important;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+  border-radius: 0 !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  background: var(--white) !important;
+  transition: box-shadow 0.2s;
 }
 
-/* kpi petites cartes */
+.card:hover {
+  box-shadow: 0 4px 20px rgba(27,42,74,0.09) !important;
+}
+
+.card-header {
+  background: var(--off) !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-left: 3px solid var(--red) !important;
+  font-family: var(--sans) !important;
+  font-size: 8.5px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.10em !important;
+  color: var(--navy) !important;
+  padding: 8px 14px !important;
+}
+
+/* ════════════════════════════════════════════
+   KPI
+   ════════════════════════════════════════════ */
 #kpi-zone .card {
-    border-radius: 14px !important;
+  border-left: 3px solid var(--red) !important;
+  border-radius: 0 !important;
 }
 
-/* Graphs dans des cartes : respirations */
-.card .js-plotly-plot {
-    padding: 8px;
+#kpi-zone .card-body h3 {
+  font-family: var(--serif);
+  font-size: 1.55rem;
+  color: var(--navy);
 }
 
-/* Filtre card */
-.filters-card {
-    border-radius: 18px !important;
+.badge {
+  border-radius: 2px !important;
+  font-family: var(--sans) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  padding: 3px 8px !important;
 }
 
-/* Footer */
+/* ════════════════════════════════════════════
+   FOOTER
+   ════════════════════════════════════════════ */
 .app-footer {
-    font-size: 0.8rem;
-    color: #6b7280;
+  border-top: 2px solid var(--red);
+  padding: 10px 32px;
+  font-size: 9.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--white);
 }
+
+/* ════════════════════════════════════════════
+   BOUTON SIDEBAR (☰ dans la barre rouge)
+   ════════════════════════════════════════════ */
+#sidebar-toggle {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: white !important;
+  font-size: 20px !important;
+  opacity: 0.9;
+  transition: opacity 0.15s;
+}
+#sidebar-toggle:hover { opacity: 1; }
+
+/* ════════════════════════════════════════════
+   BOUTONS GÉNÉRIQUES
+   ════════════════════════════════════════════ */
+.btn-inria-primary {
+  background: var(--red); color: white; border: none;
+  border-radius: 0; font-family: var(--sans);
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 6px 16px; cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-inria-primary:hover { background: #c42a0e; }
+
+.btn-inria-ghost {
+  background: transparent; color: var(--navy);
+  border: 1.5px solid var(--border); border-radius: 0;
+  font-family: var(--sans); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 5px 14px; cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-inria-ghost:hover { border-color: var(--red); color: var(--red); }
+
+/* Boutons dans offcanvas Bootstrap */
+.btn-light {
+  border-radius: 0 !important;
+  border: 1.5px solid rgba(255,255,255,0.30) !important;
+  font-weight: 700 !important; font-size: 10px !important;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: white !important;
+  background: rgba(255,255,255,0.12) !important;
+  transition: background 0.15s;
+}
+.btn-light:hover { background: rgba(255,255,255,0.25) !important; }
+
+/* ════════════════════════════════════════════
+   SIDEBAR OFFCANVAS — fond INRIA
+   ════════════════════════════════════════════ */
+.offcanvas-header { display: none; }  /* on gère notre propre header */
+
+/* ════════════════════════════════════════════
+   SÉPARATEURS
+   ════════════════════════════════════════════ */
+hr {
+  border-color: var(--border) !important;
+  opacity: 1 !important;
+  margin: 12px 0 !important;
+}
+
+/* ════════════════════════════════════════════
+   SCROLLBAR
+   ════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--off); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--red); }
+
+/* ════════════════════════════════════════════
+   ANIMATIONS
+   ════════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.inria-anim   { animation: fadeUp 0.35s ease both; }
+.inria-anim-1 { animation-delay: 0.05s; }
+.inria-anim-2 { animation-delay: 0.12s; }
+.inria-anim-3 { animation-delay: 0.20s; }
+
+/* ════════════════════════════════════════════
+   SUPPRESSION COULEURS ROUGES BOOTSTRAP
+   (garder le rouge INRIA uniquement)
+   ════════════════════════════════════════════ */
+.text-danger   { color: var(--navy) !important; }
+.bg-danger     { background-color: var(--navy) !important; }
+.btn-danger    { background-color: var(--navy) !important; border-color: var(--navy) !important; }
+
+/* ════════════════════════════════════════════
+   MODE SOMBRE (body.dark-mode)
+   ════════════════════════════════════════════ */
+body.dark-mode { background: #0d1117 !important; color: #e2e8f0 !important; }
+body.dark-mode .inria-topnav    { background: #111827 !important; border-bottom-color: #1f2937 !important; }
+body.dark-mode .inria-hero      { background: #111827 !important; border-bottom-color: #1f2937 !important; }
+body.dark-mode .inria-filter-block { background: #0d1117 !important; border-bottom-color: #1f2937 !important; }
+body.dark-mode .card,
+body.dark-mode .dash-bootstrap .card { background: #111827 !important; border-color: #1f2937 !important; }
+body.dark-mode .card-header     { background: #0d1117 !important; border-color: #1f2937 !important; color: #e2e8f0 !important; }
+body.dark-mode .custom-tabs     { background: #111827 !important; border-color: #1f2937 !important; }
+body.dark-mode .custom-tab      { color: #6b7280 !important; }
+body.dark-mode .custom-tab:hover { background: #1f2937 !important; color: #e2e8f0 !important; }
+body.dark-mode .custom-tab--selected { color: var(--red) !important; border-bottom-color: var(--red) !important; }
+body.dark-mode .app-footer      { background: #111827 !important; border-top-color: var(--red) !important; }
+body.dark-mode h1,h2,h3,h4     { color: #e2e8f0 !important; }
+body.dark-mode .inria-hero h1   { color: #f1f5f9 !important; }

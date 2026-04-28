@@ -1,10 +1,12 @@
-/* --------- Fond global --------- */
+/* =============================================================
+   INRIA Dashboard – Mode sombre
+   ============================================================= */
+
 body.dark-mode {
     background-color: #0b1020 !important;
     color: #e5e7eb !important;
 }
 
-/* Container principal */
 body.dark-mode .container-fluid {
     background-color: transparent !important;
 }
@@ -13,11 +15,17 @@ body.dark-mode .container-fluid {
 body.dark-mode .card,
 body.dark-mode .dbc-card {
     background-color: #141827 !important;
-    border-color: rgba(148, 163, 184, 0.25) !important;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.6) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.55) !important;
 }
 
-/* Titre */
+/* En-têtes de cartes */
+body.dark-mode .card-header {
+    color: #cbd5e1 !important;
+    border-bottom-color: rgba(148, 163, 184, 0.15) !important;
+}
+
+/* Titres */
 body.dark-mode h1,
 body.dark-mode h2,
 body.dark-mode h3,
@@ -33,17 +41,32 @@ body.dark-mode .custom-tab {
 }
 
 body.dark-mode .custom-tab--selected {
-    background: linear-gradient(135deg, #00a5cc 0%, #a60f79 95%) !important;
+    background: linear-gradient(135deg, #00a5cc 0%, #27348b 95%) !important;
     color: #f9fafb !important;
-    border-color: rgba(191, 219, 254, 0.6) !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
+/* Header INRIA en mode sombre */
+body.dark-mode .app-header-inria {
+    background: linear-gradient(100deg, #0e2c5e 0%, #1067a3 55%, #00a5cc 100%) !important;
 }
 
 /* Sidebar / Offcanvas */
 body.dark-mode .offcanvas {
-    box-shadow: 6px 0 25px rgba(0,0,0,0.7) !important;
+    box-shadow: 6px 0 25px rgba(0,0,0,0.70) !important;
 }
 
 /* Footer */
 body.dark-mode .app-footer {
     color: #9ca3af !important;
+}
+
+/* Texte muted */
+body.dark-mode .text-muted {
+    color: #9ca3af !important;
+}
+
+/* Séparateur */
+body.dark-mode hr {
+    border-color: rgba(148,163,184,0.18) !important;
 }
