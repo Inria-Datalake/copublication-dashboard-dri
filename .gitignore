@@ -55,3 +55,6 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+*.parquet
+patch_*.py
