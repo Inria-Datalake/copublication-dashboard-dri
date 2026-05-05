@@ -14,7 +14,7 @@
   --muted:      #888880;
   --serif:      'Source Serif 4', Georgia, serif;
   --sans:       'Source Sans 3', Helvetica, Arial, sans-serif;
-  --sidebar-w:  44px;   /* barre rouge fixe */
+  --sidebar-w:  44px;
 }
 
 /* ── Reset ── */
@@ -92,7 +92,6 @@ body {
 
 /* ════════════════════════════════════════════
    CONTENU PRINCIPAL PLEINE LARGEUR
-   (plus de panneau gauche fixe — tout dans sidebar)
    ════════════════════════════════════════════ */
 .inria-content-full {
   display: flex;
@@ -147,12 +146,15 @@ body {
 }
 
 /* ════════════════════════════════════════════
-   BLOC FILTRES
+   BLOC FILTRES — FIX Z-INDEX
    ════════════════════════════════════════════ */
 .inria-filter-block {
   background: var(--off);
   border-bottom: 1px solid var(--border);
   padding: 12px 32px;
+  position: relative;
+  z-index: 500;
+  overflow: visible;
 }
 
 .inria-filter-label {
@@ -183,7 +185,7 @@ label.mb-1 {
   background: var(--white) !important;
   min-height: 30px !important;
 }
-.Select-control:hover  { border-color: var(--red) !important; }
+.Select-control:hover { border-color: var(--red) !important; }
 
 .Select--multi .Select-value {
   background: var(--navy) !important;
@@ -193,6 +195,24 @@ label.mb-1 {
   font-size: 9.5px !important;
 }
 .Select--multi .Select-value-icon:hover { background: var(--red) !important; }
+
+/* ════════════════════════════════════════════
+   FIX : menus déroulants au-dessus de la carte
+   ════════════════════════════════════════════ */
+.dcc-dropdown {
+  overflow: visible !important;
+  position: relative;
+  z-index: 9999;
+}
+
+.Select-menu-outer {
+  z-index: 9999 !important;
+  position: absolute !important;
+}
+
+.dash-dropdown .Select-menu-outer {
+  z-index: 9999 !important;
+}
 
 /* ════════════════════════════════════════════
    ONGLETS — style INRIA (ligne rouge dessous)
@@ -339,7 +359,6 @@ label.mb-1 {
 }
 .btn-inria-ghost:hover { border-color: var(--red); color: var(--red); }
 
-/* Boutons dans offcanvas Bootstrap */
 .btn-light {
   border-radius: 0 !important;
   border: 1.5px solid rgba(255,255,255,0.30) !important;
@@ -354,7 +373,7 @@ label.mb-1 {
 /* ════════════════════════════════════════════
    SIDEBAR OFFCANVAS — fond INRIA
    ════════════════════════════════════════════ */
-.offcanvas-header { display: none; }  /* on gère notre propre header */
+.offcanvas-header { display: none; }
 
 /* ════════════════════════════════════════════
    SÉPARATEURS
@@ -387,7 +406,6 @@ hr {
 
 /* ════════════════════════════════════════════
    SUPPRESSION COULEURS ROUGES BOOTSTRAP
-   (garder le rouge INRIA uniquement)
    ════════════════════════════════════════════ */
 .text-danger   { color: var(--navy) !important; }
 .bg-danger     { background-color: var(--navy) !important; }
