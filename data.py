@@ -5,17 +5,17 @@ import pandas as pd
 # ─────────────────────────────────────────────
 # Chemins
 # ─────────────────────────────────────────────
-BASE_DIR    = Path(__file__).parent
-XLSX_PATH   = BASE_DIR / "dashboard_dri_v3.xlsx"
-CSV_PATH    = BASE_DIR / "dashboard_dri_v3.csv"
+BASE_DIR     = Path(__file__).parent
+XLSX_PATH    = BASE_DIR / "dashboard_dri_v3.xlsx"
+CSV_PATH     = BASE_DIR / "dashboard_dri_v3.csv"
 PARQUET_PATH = BASE_DIR / "dashboard_dri_v3.parquet"
 
 # ─────────────────────────────────────────────
 # Cache global — chargé UNE SEULE FOIS
 # ─────────────────────────────────────────────
 _CACHE = {
-    "df":         None,   # DataFrame principal
-    "aggregates": None,   # Pré-agrégations pour les graphiques
+    "df":         None,
+    "aggregates": None,
 }
 
 
@@ -42,11 +42,10 @@ def create_csv_from_xlsx(xlsx_path=XLSX_PATH, csv_path=CSV_PATH, sheet_name=0, f
 
 
 def _build_parquet():
-    """Convertit le CSV en Parquet si nécessaire (lecture 5x plus rapide)."""
+    """Convertit le CSV en Parquet si nécessaire."""
     if PARQUET_PATH.exists():
-        # Regénérer seulement si le CSV est plus récent
         if CSV_PATH.exists() and CSV_PATH.stat().st_mtime <= PARQUET_PATH.stat().st_mtime:
-            return  # Parquet déjà à jour
+            return
 
     print("[INFO] Conversion CSV → Parquet...")
     encodings = ["utf-8-sig", "utf-8", "latin1"]
@@ -85,14 +84,16 @@ def _clean_df(df):
         .str.strip()
     )
 
+    # ── FIX : "Domaines consolidés" → "Domaine(s)" pour les callbacks ──
     rename_map = {
-        "Auteurs FR":           "Auteurs_FR",
-        "Auteurs copubliants":  "Auteurs_copubliants",
-        "Organisme copubliant": "Organisme_copubliant",
-        "UE/Non UE":            "UE/Non_UE",
-        "ID Aurehal":           "ID_Aurehal",
-        "Ann\u00e9e":           "Année",
-        "Domaines consolid\u00e9s": "Domaines consolidés",
+        "Auteurs FR":               "Auteurs_FR",
+        "Auteurs copubliants":      "Auteurs_copubliants",
+        "Organisme copubliant":     "Organisme_copubliant",
+        "UE/Non UE":                "UE/Non_UE",
+        "ID Aurehal":               "ID_Aurehal",
+        "Ann\u00e9e":               "Année",
+        "Domaines consolid\u00e9s": "Domaine(s)",
+        "Domaines consolidés":      "Domaine(s)",
     }
     df = df.rename(columns=rename_map)
 
@@ -165,22 +166,16 @@ def _clean_df(df):
     if "Année" in df.columns:
         df = df[df["Année"].between(2017, 2026, inclusive="both")]
 
-    # Optimisation mémoire : convertir les colonnes texte en "category"
-    cat_cols = ["Centre", "Equipe", "Pays", "Ville",
-                "Organisme_copubliant", "UE/Non_UE", "Domaines consolidés"]
-    for col in cat_cols:
-        if col in df.columns:
-            df[col] = df[col].astype("category")
+    # ── FIX : PAS de conversion en "category" ──
+    # Les colonnes category perdent leur type quand elles passent par
+    # dcc.Store (sérialisation JSON), ce qui casse filter_df au retour.
+    # On reste en object/string — l'impact perf est négligeable.
 
     return df
 
 
 def _build_aggregates(df):
-    """
-    Pré-calcule toutes les agrégations utilisées par les graphiques.
-    Appelé une seule fois au chargement — les callbacks n'ont plus qu'à
-    lire ces résultats pré-calculés.
-    """
+    """Pré-calcule toutes les agrégations utilisées par les graphiques."""
     agg = {}
 
     if "Année" in df.columns:
@@ -212,7 +207,7 @@ def _build_aggregates(df):
             .size()
             .reset_index(name="count")
             .sort_values("count", ascending=False)
-            .head(50)  # Top 50 suffisant pour les graphiques
+            .head(50)
         )
 
     if "Centre" in df.columns and "Année" in df.columns:
@@ -229,13 +224,12 @@ def _build_aggregates(df):
             .reset_index(name="count")
         )
 
-    # Listes de valeurs uniques pour les filtres (dropdowns)
-    agg["unique_centres"]   = sorted(df["Centre"].dropna().unique().tolist()) if "Centre" in df.columns else []
-    agg["unique_equipes"]   = sorted(df["Equipe"].dropna().unique().tolist()) if "Equipe" in df.columns else []
-    agg["unique_pays"]      = sorted(df["Pays"].dropna().unique().tolist()) if "Pays" in df.columns else []
-    agg["unique_villes"]    = sorted(df["Ville"].dropna().unique().tolist()) if "Ville" in df.columns else []
-    agg["unique_organismes"]= sorted(df["Organisme_copubliant"].dropna().unique().tolist()) if "Organisme_copubliant" in df.columns else []
-    agg["unique_annees"]    = sorted(df["Année"].dropna().astype(int).unique().tolist()) if "Année" in df.columns else []
+    agg["unique_centres"]    = sorted(df["Centre"].dropna().unique().tolist())                    if "Centre" in df.columns else []
+    agg["unique_equipes"]    = sorted(df["Equipe"].dropna().unique().tolist())                    if "Equipe" in df.columns else []
+    agg["unique_pays"]       = sorted(df["Pays"].dropna().unique().tolist())                      if "Pays" in df.columns else []
+    agg["unique_villes"]     = sorted(df["Ville"].dropna().unique().tolist())                     if "Ville" in df.columns else []
+    agg["unique_organismes"] = sorted(df["Organisme_copubliant"].dropna().unique().tolist())      if "Organisme_copubliant" in df.columns else []
+    agg["unique_annees"]     = sorted(df["Année"].dropna().astype(int).unique().tolist())         if "Année" in df.columns else []
 
     return agg
 
@@ -243,8 +237,7 @@ def _build_aggregates(df):
 def load_data():
     """
     Retourne le DataFrame depuis le cache.
-    Si le cache est vide (premier appel), charge et nettoie les données
-    puis les garde en mémoire pour tous les appels suivants.
+    Si le cache est vide, charge et nettoie les données.
     """
     if _CACHE["df"] is not None:
         print("[CACHE] Données déjà en mémoire — retour immédiat.")
@@ -252,28 +245,22 @@ def load_data():
 
     print("[INIT] Premier chargement des données...")
 
-    # Créer le CSV si besoin
     create_csv_from_xlsx(force=False)
-
-    # Convertir en Parquet si besoin
     _build_parquet()
 
-    # Lire depuis Parquet (rapide) ou CSV (fallback)
     if PARQUET_PATH.exists():
         print("[INFO] Lecture depuis Parquet...")
         df = pd.read_parquet(PARQUET_PATH)
     else:
         print("[INFO] Lecture depuis CSV (fallback)...")
-        df = pd.read_csv(CSV_PATH, encoding="utf-8-sig", sep=",",
-                         engine="python", on_bad_lines="skip", dtype=str)
+        df = pd.read_csv(
+            CSV_PATH, encoding="utf-8-sig", sep=",",
+            engine="python", on_bad_lines="skip", dtype=str,
+        )
 
-    # Nettoyage
     df = _clean_df(df)
 
-    # Pré-agrégations
     _CACHE["aggregates"] = _build_aggregates(df)
-
-    # Mise en cache
     _CACHE["df"] = df
 
     print(f"[OK] {len(df)} lignes chargées et mises en cache.")
@@ -281,10 +268,7 @@ def load_data():
 
 
 def get_aggregates():
-    """
-    Retourne les agrégations pré-calculées.
-    Appelle load_data() si nécessaire.
-    """
+    """Retourne les agrégations pré-calculées."""
     if _CACHE["aggregates"] is None:
         load_data()
     return _CACHE["aggregates"]
@@ -293,7 +277,6 @@ def get_aggregates():
 def filter_df(df, centres, equipes, pays, villes, organismes, annees):
     """
     Filtre le DataFrame selon les sélections utilisateur.
-    Utilise les colonnes 'category' pour un filtrage ultra-rapide.
     """
     dff = df
 

@@ -10,6 +10,7 @@ from callbacks import register_callbacks
 # Chargement des données UNE SEULE FOIS au démarrage
 df = load_data()
 
+
 def create_app():
     external_scripts = [
         "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
@@ -22,13 +23,17 @@ def create_app():
         routes_pathname_prefix="/copublications-dashboard/",
         external_stylesheets=[THEME],
         external_scripts=external_scripts,
-        suppress_callback_exceptions=True,
-        meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
+        suppress_callback_exceptions=True,   # ← indispensable pour les tabs
+        meta_tags=[
+            {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+        ],
     )
+
     app.title = "Copublications Inria"
     app.layout = create_layout(df)
     register_callbacks(app, df)
 
+    # ── Callback dark mode ─────────────────────────────────────
     app.clientside_callback(
         """
         function(n) {
@@ -47,12 +52,13 @@ def create_app():
         """,
         Output("toggle-dark", "children"),
         Input("toggle-dark", "n_clicks"),
+        prevent_initial_call=True,   # ← évite le flash au démarrage
     )
 
     return app
 
 
-app = create_app()
+app    = create_app()
 server = app.server
 
 if __name__ == "__main__":

@@ -1707,38 +1707,36 @@ def register_callbacks(app, df_base):
 
         return current_style
 
-
-    # ========================================================
+# ========================================================
     # 4 — Onglet "Évolution des copublications"
     # ========================================================
     @app.callback(
         [
             Output("sunburst_collab", "figure"),
-            Output("team_timeline", "figure"),
-            Output("sankey_collab", "figure"),
-            Output("radar_centre", "figure"),
-            Output("story_evol", "children"),
+            Output("team_timeline",   "figure"),
+            Output("sankey_collab",   "figure"),
+            Output("radar_centre",    "figure"),
+            Output("story_evol",      "children"),
         ],
         [
-            Input("centre", "value"),
-            Input("equipe", "value"),
-            Input("pays", "value"),
-            Input("ville", "value"),
-            Input("org", "value"),
-            Input("annee", "value"),
-            Input("tabs", "value"),
-            Input("store-data", "data"),
+            Input("centre",      "value"),
+            Input("equipe",      "value"),
+            Input("pays",        "value"),
+            Input("ville",       "value"),
+            Input("org",         "value"),
+            Input("annee",       "value"),
+            Input("tabs",        "value"),
+            Input("store-data",  "data"),
         ],
     )
     def update_evolution(
         centres, equipes, pays, villes, orgs, annees, tab, stored_data
     ):
-        # On ne calcule l'onglet que lorsqu'il est actif
+        # ── FIX : on ne calcule QUE quand l'onglet est actif ──
         if tab != "tab-evolution":
             return no_update, no_update, no_update, no_update, no_update
 
-        # Choix du dataframe (CSV chargé ou df initial)
-        df = pd.DataFrame(stored_data) if stored_data is not None else df_base
+        df  = pd.DataFrame(stored_data) if stored_data is not None else df_base
         dff = filter_df(df, centres, equipes, pays, villes, orgs, annees)
 
         # ---------- 0) Cas sans données ----------
@@ -1749,15 +1747,10 @@ def register_callbacks(app, df_base):
             )
             story_div = html.Div(
                 [
-                    html.H5(
-                        "Résumé des copublications",
-                        className="mb-2",
-                        style={"color": PRIMARY},
-                    ),
-                    html.P(
-                        "Aucune copublication n’est disponible pour les filtres sélectionnés.",
-                        className="mb-1",
-                    ),
+                    html.H5("Résumé des copublications", className="mb-2",
+                            style={"color": PRIMARY}),
+                    html.P("Aucune copublication n'est disponible pour les filtres sélectionnés.",
+                           className="mb-1"),
                 ],
                 style={
                     "backgroundColor": "#f8fbff",
@@ -1772,14 +1765,12 @@ def register_callbacks(app, df_base):
         # =========================================================================
         if all(col in dff.columns for col in ["Centre", "Equipe", "Organisme_copubliant"]):
             sun_df = (
-                dff.groupby(["Centre", "Equipe", "Organisme_copubliant"])["HalID"]
+                dff.groupby(["Centre", "Equipe", "Organisme_copubliant"], observed=True)["HalID"]
                 .nunique()
                 .reset_index(name="Publications")
             )
-
-            # Mapping couleur fixe pour les centres présents
-            centres_present = sun_df["Centre"].unique().tolist()
-            colour_map_sun = {c: get_centre_color(c, i) for i, c in enumerate(centres_present)}
+            centres_present  = sun_df["Centre"].unique().tolist()
+            colour_map_sun   = {c: get_centre_color(c, i) for i, c in enumerate(centres_present)}
 
             fig_sunburst = px.sunburst(
                 sun_df,
@@ -1797,15 +1788,14 @@ def register_callbacks(app, df_base):
             )
 
         # =========================================================================
-        # 2) TEAM TIMELINE : évolution des copublications par équipe
+        # 2) TEAM TIMELINE
         # =========================================================================
         if all(col in dff.columns for col in ["Année", "Equipe"]):
             team_df = (
-                dff.groupby(["Année", "Equipe"])["HalID"]
+                dff.groupby(["Année", "Equipe"], observed=True)["HalID"]
                 .nunique()
                 .reset_index(name="Publications")
             )
-
             fig_team = px.line(
                 team_df,
                 x="Année",
@@ -1835,14 +1825,14 @@ def register_callbacks(app, df_base):
         # =========================================================================
         if all(col in dff.columns for col in ["Centre", "Pays", "Organisme_copubliant"]):
             sankey_df = (
-                dff.groupby(["Centre", "Pays", "Organisme_copubliant"])["HalID"]
+                dff.groupby(["Centre", "Pays", "Organisme_copubliant"], observed=True)["HalID"]
                 .nunique()
                 .reset_index(name="Publications")
                 .sort_values("Publications", ascending=False)
                 .head(80)
             )
 
-            labels = []
+            labels     = []
             node_index = {}
 
             def get_index(label):
@@ -1858,44 +1848,29 @@ def register_callbacks(app, df_base):
                 p = get_index(f"Pays : {row['Pays']}")
                 o = get_index(f"Org : {row['Organisme_copubliant']}")
                 v = row["Publications"]
+                sources += [c, p]
+                targets += [p, o]
+                values  += [v, v]
 
-                sources.append(c)
-                targets.append(p)
-                values.append(v)
-
-                sources.append(p)
-                targets.append(o)
-                values.append(v)
-
-            # Couleurs des nœuds : fixe pour les centres, neutre pour pays/org
             def _sankey_node_color(label: str) -> str:
                 if label.startswith("Centre : "):
-                    centre_name = label[len("Centre : "):]
-                    return get_centre_color(centre_name, 0)
+                    return get_centre_color(label[len("Centre : "):], 0)
                 elif label.startswith("Pays : "):
                     return "rgba(100,130,200,0.70)"
-                else:
-                    return "rgba(160,160,160,0.55)"
+                return "rgba(160,160,160,0.55)"
 
-            fig_sankey = go.Figure(
-                data=[
-                    go.Sankey(
-                        node=dict(
-                            pad=15,
-                            thickness=15,
-                            line=dict(color="black", width=0.3),
-                            label=labels,
-                            color=[_sankey_node_color(lbl) for lbl in labels],
-                        ),
-                        link=dict(
-                            source=sources,
-                            target=targets,
-                            value=values,
-                            color="rgba(39,52,139,0.2)",
-                        ),
-                    )
-                ]
-            )
+            fig_sankey = go.Figure(data=[go.Sankey(
+                node=dict(
+                    pad=15, thickness=15,
+                    line=dict(color="black", width=0.3),
+                    label=labels,
+                    color=[_sankey_node_color(lbl) for lbl in labels],
+                ),
+                link=dict(
+                    source=sources, target=targets, value=values,
+                    color="rgba(39,52,139,0.2)",
+                ),
+            )])
             fig_sankey.update_layout(
                 template=GRAPH_TEMPLATE,
                 title="Flux Centre → Pays → Organisme",
@@ -1907,12 +1882,12 @@ def register_callbacks(app, df_base):
             )
 
         # =========================================================================
-        # 4) RADAR MULTI-CENTRES PAR DOMAINES
+        # 4) RADAR — FIX : colonne "Domaine(s)" (renommée dans data.py)
         # =========================================================================
         if "Centre" in dff.columns and "Domaine(s)" in dff.columns:
             dom_df = (
                 dff.dropna(subset=["Centre", "Domaine(s)"])
-                .groupby(["Centre", "Domaine(s)"])["HalID"]
+                .groupby(["Centre", "Domaine(s)"], observed=True)["HalID"]
                 .nunique()
                 .reset_index(name="Publications")
             )
@@ -1923,50 +1898,41 @@ def register_callbacks(app, df_base):
                     title="Profil par domaine (aucune donnée domaine)",
                 )
             else:
-                # ── Centres à tracer ──
                 if centres:
-                    centres_to_plot = [
-                        c for c in centres if c in dom_df["Centre"].unique()
-                    ]
+                    centres_to_plot = [c for c in centres if c in dom_df["Centre"].unique()]
                 else:
                     centres_to_plot = (
-                        dom_df.groupby("Centre")["Publications"]
-                        .sum()
-                        .sort_values(ascending=False)
-                        .head(5)
-                        .index.tolist()
+                        dom_df.groupby("Centre", observed=True)["Publications"]
+                        .sum().sort_values(ascending=False).head(5).index.tolist()
                     )
                 if not centres_to_plot:
                     centres_to_plot = (
-                        dom_df.groupby("Centre")["Publications"]
-                        .sum()
-                        .sort_values(ascending=False)
-                        .head(5)
-                        .index.tolist()
+                        dom_df.groupby("Centre", observed=True)["Publications"]
+                        .sum().sort_values(ascending=False).head(5).index.tolist()
                     )
 
-                # ── Top domaines — on prend jusqu'à 8 pour plus de détail ──
                 top_dom = (
-                    dom_df.groupby("Domaine(s)")["Publications"]
-                    .sum()
-                    .sort_values(ascending=False)
-                    .head(8)
-                    .index.tolist()
+                    dom_df.groupby("Domaine(s)", observed=True)["Publications"]
+                    .sum().sort_values(ascending=False).head(8).index.tolist()
                 )
 
-                # ── Labels : on garde les noms complets, le wrapping se fait au layout ──
                 categories_raw    = top_dom
                 categories_closed = categories_raw + categories_raw[:1]
 
-                # ── Normalisation en % pour comparer centres de tailles différentes ──
                 centre_totals = (
                     dom_df[dom_df["Centre"].isin(centres_to_plot)]
-                    .groupby("Centre")["Publications"]
-                    .sum()
-                    .to_dict()
+                    .groupby("Centre", observed=True)["Publications"]
+                    .sum().to_dict()
                 )
 
                 fig_radar = go.Figure()
+
+                def _hex_to_rgba(hex_color, alpha=0.15):
+                    h = hex_color.lstrip("#")
+                    if len(h) == 3:
+                        h = "".join([c * 2 for c in h])
+                    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+                    return f"rgba({r},{g},{b},{alpha})"
 
                 for i, centre in enumerate(centres_to_plot):
                     sub   = dom_df[dom_df["Centre"] == centre]
@@ -1974,55 +1940,36 @@ def register_callbacks(app, df_base):
                     vals  = [
                         round(
                             sub.loc[sub["Domaine(s)"] == dom, "Publications"].sum()
-                            / total * 100,
-                            1,
+                            / total * 100, 1,
                         )
                         for dom in categories_raw
                     ]
                     vals_closed = vals + vals[:1]
-
                     color = get_centre_color(centre, i)
 
-                    # Conversion hex → rgba pour le remplissage
-                    def _hex_to_rgba(hex_color, alpha=0.15):
-                        h = hex_color.lstrip("#")
-                        if len(h) == 3:
-                            h = "".join([c * 2 for c in h])
-                        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-                        return f"rgba({r},{g},{b},{alpha})"
+                    fig_radar.add_trace(go.Scatterpolar(
+                        r=vals_closed,
+                        theta=categories_closed,
+                        fill="toself",
+                        name=centre,
+                        line=dict(color=color, width=2.5),
+                        fillcolor=_hex_to_rgba(color, 0.15),
+                        opacity=1,
+                        hovertemplate=(
+                            "<b>" + centre + "</b><br>"
+                            "%{theta} : <b>%{r:.1f} %</b><extra></extra>"
+                        ),
+                    ))
 
-                    fig_radar.add_trace(
-                        go.Scatterpolar(
-                            r=vals_closed,
-                            theta=categories_closed,
-                            fill="toself",
-                            name=centre,
-                            line=dict(
-                                color=color,
-                                width=2.5,
-                            ),
-                            fillcolor=_hex_to_rgba(color, 0.15),
-                            opacity=1,
-                            hovertemplate=(
-                                "<b>" + centre + "</b><br>"
-                                "%{theta} : <b>%{r:.1f} %</b><extra></extra>"
-                            ),
-                        )
-                    )
-
-                # ── Titre court (noms des centres sur une seule ligne si possible) ──
                 if len(centres_to_plot) <= 3:
                     titre_centres = " · ".join(centres_to_plot)
                 else:
                     titre_centres = f"{len(centres_to_plot)} centres"
 
-                # ── Labels avec retour à la ligne pour les noms longs ──
                 def _wrap_label(s, maxlen=18):
-                    """Coupe le label en plusieurs lignes de maxlen caractères max."""
                     s = str(s).strip()
                     if len(s) <= maxlen:
                         return s
-                    # Découpe sur les espaces
                     words = s.split()
                     lines, current = [], ""
                     for w in words:
@@ -2036,10 +1983,9 @@ def register_callbacks(app, df_base):
                         lines.append(current)
                     return "<br>".join(lines)
 
-                categories_wrapped = [_wrap_label(d) for d in categories_raw]
+                categories_wrapped        = [_wrap_label(d) for d in categories_raw]
                 categories_closed_wrapped = categories_wrapped + categories_wrapped[:1]
 
-                # Mise à jour des traces avec les labels wrappés
                 for trace in fig_radar.data:
                     trace.theta = categories_closed_wrapped
 
@@ -2047,56 +1993,36 @@ def register_callbacks(app, df_base):
                     template=GRAPH_TEMPLATE,
                     title=dict(
                         text=f"Profil par domaine — {titre_centres}",
-                        font=dict(size=13),
-                        x=0.5,
-                        xanchor="center",
+                        font=dict(size=13), x=0.5, xanchor="center",
                         pad=dict(b=6),
                     ),
                     polar=dict(
-                        # Zone polaire réduite pour laisser la place aux labels
                         domain=dict(x=[0.12, 0.88], y=[0.10, 0.92]),
                         bgcolor="rgba(240,244,255,0.45)",
                         radialaxis=dict(
-                            visible=True,
-                            ticksuffix="%",
+                            visible=True, ticksuffix="%",
                             tickfont=dict(size=9, color="#6b7280"),
                             gridcolor="rgba(0,0,0,0.10)",
                             linecolor="rgba(0,0,0,0.12)",
-                            range=[0, None],
-                            showline=True,
-                            tickangle=0,
+                            range=[0, None], showline=True, tickangle=0,
                         ),
                         angularaxis=dict(
-                            tickfont=dict(
-                                size=10,
-                                color=PRIMARY,
-                                family="Open Sans, Arial, sans-serif",
-                            ),
+                            tickfont=dict(size=10, color=PRIMARY,
+                                          family="Open Sans, Arial, sans-serif"),
                             linecolor="rgba(0,0,0,0.15)",
                             gridcolor="rgba(0,0,0,0.08)",
-                            rotation=90,
-                            direction="clockwise",
+                            rotation=90, direction="clockwise",
                         ),
                     ),
                     legend=dict(
-                        orientation="h",
-                        x=0.5,
-                        xanchor="center",
-                        y=-0.05,
-                        yanchor="top",
-                        font=dict(size=11),
+                        orientation="h", x=0.5, xanchor="center",
+                        y=-0.05, yanchor="top", font=dict(size=11),
                         bgcolor="rgba(255,255,255,0.85)",
-                        bordercolor="rgba(0,0,0,0.08)",
-                        borderwidth=1,
+                        bordercolor="rgba(0,0,0,0.08)", borderwidth=1,
                     ),
                     margin=dict(l=110, r=110, t=60, b=80),
-                    hoverlabel=dict(
-                        bgcolor="white",
-                        font_size=12,
-                        font_color=PRIMARY,
-                    ),
+                    hoverlabel=dict(bgcolor="white", font_size=12, font_color=PRIMARY),
                 )
-
         else:
             fig_radar = go.Figure().update_layout(
                 template=GRAPH_TEMPLATE,
@@ -2104,32 +2030,19 @@ def register_callbacks(app, df_base):
             )
 
         # =========================================================================
-        # 5) STORY MODE (résumé textuel)
+        # 5) STORY MODE
         # =========================================================================
         total_pubs = dff["HalID"].nunique() if "HalID" in dff.columns else len(dff)
-        nb_pays = dff["Pays"].nunique() if "Pays" in dff.columns else 0
-        nb_orgs = (
-            dff["Organisme_copubliant"].nunique()
-            if "Organisme_copubliant" in dff.columns
-            else 0
-        )
-        years = (
-            dff["Année"].dropna().astype(int)
-            if "Année" in dff.columns
-            else pd.Series([], dtype=int)
-        )
+        nb_pays    = dff["Pays"].nunique()   if "Pays"  in dff.columns else 0
+        nb_orgs    = dff["Organisme_copubliant"].nunique() if "Organisme_copubliant" in dff.columns else 0
+
+        years = dff["Année"].dropna().astype(int) if "Année" in dff.columns else pd.Series([], dtype=int)
         if len(years) > 0:
-            an_min, an_max = int(years.min()), int(years.max())
-            periode = f"{an_min}–{an_max}"
+            periode = f"{int(years.min())}–{int(years.max())}"
         else:
             periode = "période inconnue"
 
-        # Centres principaux pour le texte
-        centres_present = (
-            dff["Centre"].dropna().unique().tolist()
-            if "Centre" in dff.columns
-            else []
-        )
+        centres_present = dff["Centre"].dropna().unique().tolist() if "Centre" in dff.columns else []
         if centres and centres_present:
             centres_story = [c for c in centres if c in centres_present]
         else:
@@ -2142,30 +2055,25 @@ def register_callbacks(app, df_base):
         else:
             centres_txt = "les centres " + ", ".join(centres_story)
 
-        story_children = [
-            html.H5(
-                "Résumé des copublications",
-                className="mb-2",
-                style={"color": PRIMARY},
-            ),
-            html.P(
-                f"Sur la période {periode}, les filtres actuels représentent "
-                f"{total_pubs} copublications impliquant {nb_pays} pays "
-                f"et {nb_orgs} organismes partenaires.",
-                className="mb-1",
-            ),
-            html.P(
-                f"Les profils par domaine et les flux décrits ci-dessus mettent en évidence le rôle de {centres_txt}.",
-                className="mb-0",
-            ),
-        ]
-
         story_div = html.Div(
-            story_children,
+            [
+                html.H5("Résumé des copublications", className="mb-2",
+                        style={"color": PRIMARY}),
+                html.P(
+                    f"Sur la période {periode}, les filtres actuels représentent "
+                    f"{total_pubs} copublications impliquant {nb_pays} pays "
+                    f"et {nb_orgs} organismes partenaires.",
+                    className="mb-1",
+                ),
+                html.P(
+                    f"Les profils par domaine et les flux décrits ci-dessus mettent en évidence le rôle de {centres_txt}.",
+                    className="mb-0",
+                ),
+            ],
             style={
                 "backgroundColor": "#f8fbff",
-                "borderRadius": "12px",
-                "border": f"1px solid {PRIMARY_LIGHT}30",
+                "borderRadius":    "12px",
+                "border":          f"1px solid {PRIMARY_LIGHT}30",
             },
         )
 

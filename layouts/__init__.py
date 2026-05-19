@@ -18,7 +18,7 @@ MUTED  = "#888880"
 
 LOGO_INRIA    = "https://raw.githubusercontent.com/Inria-Datalake/copublications-dashboard/refs/heads/main/assets/logo_inria.png"
 LOGO_DATALAKE = "https://raw.githubusercontent.com/Inria-Datalake/copublications-dashboard/refs/heads/main/assets/logo_datalake.png"
-LOGO_DATA= "https://raw.githubusercontent.com/Inria-Datalake/copublications-dashboard/refs/heads/main/assets/logo_data.png"
+LOGO_DATA     = "https://raw.githubusercontent.com/Inria-Datalake/copublications-dashboard/refs/heads/main/assets/logo_data.png"
 
 
 def _sb_section(title):
@@ -152,9 +152,7 @@ def create_layout(df):
     hero = html.Div(
         className="inria-hero inria-anim inria-anim-2",
         children=[
-            html.Div(
-                className="inria-eyebrow"
-            ),
+            html.Div(className="inria-eyebrow"),
             html.H1("Copublications internationales"),
             html.P(
                 "Analyse des copublications scientifiques des équipes Inria avec leurs partenaires "
@@ -231,70 +229,125 @@ def create_layout(df):
         className="mb-3 mt-3 px-3",
     )
 
+    # ── Onglet Évolution copublications ────────────────────────
+    evolution_tab_content = html.Div(
+        id="evolution-tab-container",
+        children=[
+            dbc.Card([
+                dbc.CardHeader("À propos de cette page"),
+                dbc.CardBody([
+                    html.P(
+                        "Les graphiques de cette page permettent l'analyse des copublications internationales.",
+                        className="mb-2",
+                    ),
+                    html.P(
+                        "Ces visualisations sont plus lisibles avec un filtre resserré (un centre, une équipe…).",
+                        className="mb-2",
+                        style={"fontWeight": "600"},
+                    ),
+                    html.Hr(className="my-2"),
+                    html.P("• Disque Centre–équipe–organisme : filtrez par pays, cliquez sur un centre pour voir les équipes.", className="mb-1"),
+                    html.P("• Poids des domaines : proportion par domaine selon les filtres actifs.", className="mb-1"),
+                    html.P("• Évolution des copublications : nombre par équipe au fil du temps.", className="mb-1"),
+                    html.P("• Flux croisés : centre → pays → organisme.", className="mb-0"),
+                ], className="small"),
+            ], className="mb-3 mx-3 mt-3"),
+
+            dbc.Row([
+                dbc.Col(
+                    dcc.Graph(
+                        id="sunburst_collab",
+                        config={"responsive": True, "displaylogo": False},
+                        style={"height": "55vh", "minHeight": "340px"},
+                    ),
+                    md=6,
+                ),
+                dbc.Col(
+                    dcc.Graph(
+                        id="radar_centre",
+                        config={"responsive": True, "displaylogo": False},
+                        style={"height": "55vh", "minHeight": "340px"},
+                    ),
+                    md=6,
+                ),
+            ], className="mb-3 px-3"),
+
+            dbc.Row([
+                dbc.Col(
+                    dcc.Graph(
+                        id="team_timeline",
+                        config={"responsive": True, "displaylogo": False},
+                        style={"height": "55vh", "minHeight": "340px"},
+                    ),
+                    md=7,
+                ),
+                dbc.Col(
+                    dcc.Graph(
+                        id="sankey_collab",
+                        config={"responsive": True, "displaylogo": False},
+                        style={"height": "55vh", "minHeight": "340px"},
+                    ),
+                    md=5,
+                ),
+            ], className="mb-3 px-3"),
+
+            dbc.Row([
+                dbc.Col(
+                    html.Div(id="story_evol", className="p-3"),
+                    md=12,
+                ),
+            ], className="px-3"),
+        ],
+    )
+
     # ── Onglets ────────────────────────────────────────────────
     tabs = dcc.Tabs(
         id="tabs",
         value="tab-main",
         className="custom-tabs",
         children=[
-            dcc.Tab(label="Vue principale",
-                    value="tab-main",
-                    children=[html.Div(id="main-tab-container", children=main_tab_layout(df))],
-                    className="custom-tab", selected_className="custom-tab--selected"),
-            dcc.Tab(label="Mots-clés",
-                    value="tab-wordcloud",
-                    children=[html.Div(id="wordcloud-tab-container", children=wordcloud_tab_layout())],
-                    className="custom-tab", selected_className="custom-tab--selected"),
-            dcc.Tab(label="Réseau",
-                    value="tab-network",
-                    children=[network_tab_layout()],
-                    className="custom-tab", selected_className="custom-tab--selected"),
-            dcc.Tab(label="Évolution par pays",
-                    value="tab-country-evolution",
-                    children=[country_evolution_tab_layout()],
-                    className="custom-tab", selected_className="custom-tab--selected"),
-            dcc.Tab(label="Parts relatives",
-                    value="tab-share",
-                    children=[share_tab_layout()],
-                    className="custom-tab", selected_className="custom-tab--selected"),
-            dcc.Tab(label="Évolution copublications",
-                    value="tab-evolution",
-                    className="custom-tab", selected_className="custom-tab--selected",
-                    children=[
-                        html.Div(id="evolution-tab-container", children=[
-                            dbc.Card([
-                                dbc.CardHeader("À propos de cette page"),
-                                dbc.CardBody([
-                                    html.P("Les graphiques de cette page permettent l'analyse des copublications internationales.", className="mb-2"),
-                                    html.P("Ces visualisations sont plus lisibles avec un filtre resserré (un centre, une équipe…).", className="mb-2", style={"fontWeight": "600"}),
-                                    html.Hr(className="my-2"),
-                                    html.P("• Disque Centre–équipe–organisme : filtrez par pays, cliquez sur un centre pour voir les équipes.", className="mb-1"),
-                                    html.P("• Poids des domaines : proportion par domaine selon les filtres actifs.", className="mb-1"),
-                                    html.P("• Évolution des copublications : nombre par équipe au fil du temps.", className="mb-1"),
-                                    html.P("• Flux croisés : centre → pays → organisme.", className="mb-0"),
-                                ], className="small"),
-                            ], className="mb-3 mx-3 mt-3"),
-                            dbc.Row([
-                                dbc.Col(dcc.Graph(id="sunburst_collab",
-                                                  config={"responsive": True, "displaylogo": False},
-                                                  style={"height": "55vh", "minHeight": "340px"}), md=6),
-                                dbc.Col(dcc.Graph(id="radar_centre",
-                                                  config={"responsive": True, "displaylogo": False},
-                                                  style={"height": "55vh", "minHeight": "340px"}), md=6),
-                            ], className="mb-3 px-3"),
-                            dbc.Row([
-                                dbc.Col(dcc.Graph(id="team_timeline",
-                                                  config={"responsive": True, "displaylogo": False},
-                                                  style={"height": "55vh", "minHeight": "340px"}), md=7),
-                                dbc.Col(dcc.Graph(id="sankey_collab",
-                                                  config={"responsive": True, "displaylogo": False},
-                                                  style={"height": "55vh", "minHeight": "340px"}), md=5),
-                            ], className="mb-3 px-3"),
-                            dbc.Row([
-                                dbc.Col(html.Div(id="story_evol", className="p-3"), md=12),
-                            ], className="px-3"),
-                        ]),
-                    ]),
+            dcc.Tab(
+                label="Vue principale",
+                value="tab-main",
+                className="custom-tab",
+                selected_className="custom-tab--selected",
+                children=[html.Div(id="main-tab-container", children=main_tab_layout(df))],
+            ),
+            dcc.Tab(
+                label="Mots-clés",
+                value="tab-wordcloud",
+                className="custom-tab",
+                selected_className="custom-tab--selected",
+                children=[html.Div(id="wordcloud-tab-container", children=wordcloud_tab_layout())],
+            ),
+            dcc.Tab(
+                label="Réseau",
+                value="tab-network",
+                className="custom-tab",
+                selected_className="custom-tab--selected",
+                children=[network_tab_layout()],
+            ),
+            dcc.Tab(
+                label="Évolution par pays",
+                value="tab-country-evolution",
+                className="custom-tab",
+                selected_className="custom-tab--selected",
+                children=[country_evolution_tab_layout()],
+            ),
+            dcc.Tab(
+                label="Parts relatives",
+                value="tab-share",
+                className="custom-tab",
+                selected_className="custom-tab--selected",
+                children=[share_tab_layout()],
+            ),
+            dcc.Tab(
+                label="Évolution copublications",
+                value="tab-evolution",
+                className="custom-tab",
+                selected_className="custom-tab--selected",
+                children=[evolution_tab_content],   # ← contenu extrait dans une variable
+            ),
         ],
     )
 
@@ -307,34 +360,35 @@ def create_layout(df):
                 children=[
                     html.Img(src=LOGO_INRIA,    style={"height": "18px", "opacity": 0.55}),
                     html.Img(src=LOGO_DATALAKE, style={"height": "18px", "opacity": 0.55}),
-                    html.Span("Rapport copublications – Inria · Groupe Datalake",
-                              style={"fontSize": "9.5px", "color": MUTED}),
+                    html.Span(
+                        "Rapport copublications – Inria · Groupe Datalake",
+                        style={"fontSize": "9.5px", "color": MUTED},
+                    ),
                 ],
             ),
             html.Div(
                 style={"display": "flex", "gap": "4px"},
                 children=[
-                    html.Span("HAL",   style={"fontSize": "8.5px", "fontWeight": "700", "padding": "2px 8px",
-                                              "color": NAVY, "background": OFF, "border": f"1px solid {BORDER}",
-                                              "textTransform": "uppercase", "letterSpacing": "0.06em"}),
-                    html.Span("Inria", style={"fontSize": "8.5px", "fontWeight": "700", "padding": "2px 8px",
-                                              "color": NAVY, "background": OFF, "border": f"1px solid {BORDER}",
-                                              "textTransform": "uppercase", "letterSpacing": "0.06em"}),
+                    html.Span("HAL", style={
+                        "fontSize": "8.5px", "fontWeight": "700", "padding": "2px 8px",
+                        "color": NAVY, "background": OFF, "border": f"1px solid {BORDER}",
+                        "textTransform": "uppercase", "letterSpacing": "0.06em",
+                    }),
+                    html.Span("Inria", style={
+                        "fontSize": "8.5px", "fontWeight": "700", "padding": "2px 8px",
+                        "color": NAVY, "background": OFF, "border": f"1px solid {BORDER}",
+                        "textTransform": "uppercase", "letterSpacing": "0.06em",
+                    }),
                 ],
             ),
         ],
     )
 
-    # ══════════════════════════════════════════════════════════
-    # ── Sidebar off-canvas (tout le contenu informatif) ───────
-    # ══════════════════════════════════════════════════════════
-    # On utilise un html.Div positionné en fixed plutôt que dbc.Offcanvas
-    # pour avoir un contrôle total sur le rendu (pas de header Bootstrap parasite)
+    # ── Sidebar off-canvas ─────────────────────────────────────
     sidebar = html.Div(
         id="sidebar",
-        style={"display": "none"},   # géré par callback
+        style={"display": "none"},
         children=[
-            # Fond semi-transparent (click pour fermer)
             html.Div(
                 id="sidebar-backdrop",
                 style={
@@ -343,11 +397,10 @@ def create_layout(df):
                     "zIndex": "1299",
                 },
             ),
-            # Panneau glissant
             html.Div(
                 style={
                     "position": "fixed",
-                    "top": "0", "left": "44px",   # décalé de la barre rouge
+                    "top": "0", "left": "44px",
                     "bottom": "0",
                     "width": "300px",
                     "background": f"linear-gradient(170deg, {NAVY} 0%, #27348b 55%, #1067a3 100%)",
@@ -402,12 +455,10 @@ def create_layout(df):
                                     html.Img(
                                         src=LOGO_INRIA,
                                         style={
-                                            "height": "18px",
-                                            "maxWidth": "120px",
+                                            "height": "18px", "maxWidth": "120px",
                                             "objectFit": "contain",
                                             "filter": "brightness(0) invert(1)",
-                                            "opacity": "0.55",
-                                            "flexShrink": "0",
+                                            "opacity": "0.55", "flexShrink": "0",
                                         },
                                     ),
                                     html.Div(style={
@@ -418,12 +469,10 @@ def create_layout(df):
                                     html.Img(
                                         src=LOGO_DATALAKE,
                                         style={
-                                            "height": "18px",
-                                            "maxWidth": "110px",
+                                            "height": "18px", "maxWidth": "110px",
                                             "objectFit": "contain",
                                             "filter": "brightness(0) invert(1)",
-                                            "opacity": "0.55",
-                                            "flexShrink": "0",
+                                            "opacity": "0.55", "flexShrink": "0",
                                         },
                                     ),
                                 ],
@@ -455,7 +504,6 @@ def create_layout(df):
                             _sb_meta(RED, "Données\u00a0: ", "HAL · Inria"),
                             _sb_meta(RED, "Période\u00a0: ", "2017 – 2026"),
 
-                            # Sélection dynamique
                             html.Div(
                                 style={
                                     "display": "flex", "alignItems": "flex-start",
@@ -488,7 +536,7 @@ def create_layout(df):
                             html.P(
                                 "Le groupe Datalake, créé en 2022 au sein de la Direction de la culture et de l'information scientifique d'Inria,"
                                 "travaille à rendre possible le croisement de données entre HAL et divers référentiels, "
-                                "et de développer des outils d’analyse "
+                                "et de développer des outils d'analyse "
                                 "pour les acteurs scientifiques et décisionnaires."
                                 "Il est constitué de 6 membres : data scientists, développeurs et documentalistes experts."
                                 "Le présent outil a été développé à la demande et en collaboration"
@@ -508,12 +556,11 @@ def create_layout(df):
                                        "Kumar Guha · Daniel Da Silva · Andréa Nebot"),
                             _sb_credit("Visualisations", "Andréa Nebot"),
                             _sb_credit("Groupe", "Datalake · Inria"),
-                            
+
                             # ── Section Exports ───────────────
                             _sb_section("Exports"),
                             dcc.Download(id="download-csv"),
-                            _sb_btn("↓ Exporter les données CSV",
-                                    "btn-export-csv"),
+                            _sb_btn("↓ Exporter les données CSV", "btn-export-csv"),
                             _sb_btn("↓ Exporter en PDF", "export-pdf"),
                         ],
                     ),
@@ -528,16 +575,14 @@ def create_layout(df):
         children=[
             dcc.Store(id="store-data"),
 
-            # Barre rouge verticale fixe (44 px)
             red_sidebar,
 
-            # Contenu principal décalé de 44 px
             html.Div(
                 className="inria-main",
                 children=[
                     topnav,
                     html.Div(
-                        className="inria-content-full",   # pleine largeur (pas de left panel)
+                        className="inria-content-full",
                         children=[
                             hero,
                             filter_block,
