@@ -789,10 +789,10 @@ def register_callbacks(app, df_base):
         anonymize_fg = bool(anonymize_clicks) and (anonymize_clicks % 2 == 1)
 
         edge_trace   = go.Scattergl(x=ex,y=ey,mode="lines",line=dict(width=0.8,color=EDGE_COLOR),hoverinfo="none",showlegend=False,name="_edges")
-        fg_trace     = go.Scatter(x=fgx,y=fgy,mode="markers",marker=dict(size=fgsz,color="rgba(100,116,139,0.55)" if not is_dark else "rgba(148,163,184,0.50)",line=dict(width=0.8,color="rgba(255,255,255,0.60)")),customdata=fgcd,hovertemplate="%{customdata}<extra></extra>",showlegend=False,name="")
-        fr_trace     = go.Scatter(x=frx,y=fry,mode="markers",marker=dict(size=frsz,color=frcol,line=dict(width=0.8,color="rgba(255,255,255,0.70)"),opacity=0.90),customdata=frcd,hovertemplate="%{customdata}<extra></extra>",showlegend=False,name="")
+        fg_trace     = go.Scattergl(x=fgx,y=fgy,mode="markers",marker=dict(size=fgsz,color="rgba(100,116,139,0.55)" if not is_dark else "rgba(148,163,184,0.50)",line=dict(width=0.8,color="rgba(255,255,255,0.60)")),customdata=fgcd,hovertemplate="%{customdata}<extra></extra>",showlegend=False,name="")
+        fr_trace     = go.Scattergl(x=frx,y=fry,mode="markers",marker=dict(size=frsz,color=frcol,line=dict(width=0.8,color="rgba(255,255,255,0.70)"),opacity=0.90),customdata=frcd,hovertemplate="%{customdata}<extra></extra>",showlegend=False,name="")
         halo_traces  = [go.Scattergl(x=cx,y=cy,mode="markers",marker=dict(size=[s*hsz for s in csz],color=[_rgba(c,ha) for c in cout],line=dict(width=1,color=[_rgba(c,ha*2) for c in cout])),hoverinfo="skip",showlegend=False) for hsz,ha in zip([4.5,2.8,1.7],HALO_A)]
-        centre_disc  = go.Scatter(x=cx,y=cy,mode="markers",marker=dict(size=csz,color=[_rgba(c,DISC_A) for c in cout],line=dict(width=2.5,color="rgba(255,255,255,0.90)")),customdata=ccd,hovertemplate="%{customdata}<extra></extra>",showlegend=False,name="")
+        centre_disc  = go.Scattergl(x=cx,y=cy,mode="markers",marker=dict(size=csz,color=[_rgba(c,DISC_A) for c in cout],line=dict(width=2.5,color="rgba(255,255,255,0.90)")),customdata=ccd,hovertemplate="%{customdata}<extra></extra>",showlegend=False,name="")
         centre_labels= go.Scatter(x=cx,y=cy,mode="text",text=clbl,textposition="bottom center",textfont=dict(size=12,color="#1e293b" if not is_dark else "#f1f5f9",family="Open Sans, Arial, sans-serif"),hoverinfo="skip",showlegend=False,name="")
         fr_lbl_trace = go.Scattergl(x=frx,y=fry,mode="text",text=frlbl,textposition="top center",textfont=dict(size=8,color=LABEL_FR_COLOR,family="Open Sans, Arial, sans-serif"),hoverinfo="skip",showlegend=False)
         fg_lbl_trace = go.Scattergl(x=fgx,y=fgy,mode="text",text=["" if anonymize_fg else lbl for lbl in fglbl],textposition="top center",textfont=dict(size=8,color=LABEL_FG_COLOR,family="Open Sans, Arial, sans-serif"),hoverinfo="skip",showlegend=False)
@@ -1175,7 +1175,7 @@ def register_callbacks(app, df_base):
                     ann_sel = dff.groupby("Année",observed=True)["HalID"].nunique().reset_index(name="n_sel")
                     merged  = ann_sel.merge(ann_global, on="Année", how="left")
                     merged["pct"] = (merged["n_sel"] / merged["Total_global"].replace(0,np.nan) * 100).round(2)
-                    fig_evol.add_trace(go.Scatter(x=merged["Année"],y=merged["pct"],mode="lines+markers",
+                    fig_evol.add_trace(go.Scattergl(x=merged["Année"],y=merged["pct"],mode="lines+markers",
                         name="Sélection globale", line=dict(width=2.5,color=QUAL_PALETTE[color_idx%len(QUAL_PALETTE)]),
                         marker=dict(size=7), hovertemplate="Année : %{x}<br>Part : <b>%{y:.2f}%</b><extra></extra>"))
                     color_idx += 1
@@ -1187,7 +1187,7 @@ def register_callbacks(app, df_base):
                         merged = ann_sel.merge(ann_global, on="Année", how="left")
                         merged["pct"] = (merged["n_sel"] / merged["Total_global"].replace(0,np.nan) * 100).round(2)
                         tc = get_centre_color(str(val),color_idx) if col=="Centre" else QUAL_PALETTE[color_idx%len(QUAL_PALETTE)]
-                        fig_evol.add_trace(go.Scatter(x=merged["Année"],y=merged["pct"],mode="lines+markers",
+                        fig_evol.add_trace(go.Scattergl(x=merged["Année"],y=merged["pct"],mode="lines+markers",
                             name=f"{dim_label} : {val}", line=dict(width=2.5,color=tc), marker=dict(size=7),
                             hovertemplate=f"{dim_label} : {val}<br>Année : %{{x}}<br>Part : <b>%{{y:.2f}}%</b><extra></extra>"))
                         color_idx += 1
