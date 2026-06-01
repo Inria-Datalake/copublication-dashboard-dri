@@ -22,7 +22,6 @@ LOGO_DATA     = "https://raw.githubusercontent.com/Inria-Datalake/copublications
 
 
 def _sb_section(title):
-    """Séparateur titré dans la sidebar."""
     return html.Div(
         title,
         style={
@@ -40,7 +39,6 @@ def _sb_section(title):
 
 
 def _sb_meta(dot_color, label, value):
-    """Ligne métadonnée dans la sidebar."""
     return html.Div(
         style={"display": "flex", "alignItems": "flex-start", "gap": "8px",
                "fontSize": "11px", "color": "rgba(255,255,255,0.75)",
@@ -59,7 +57,6 @@ def _sb_meta(dot_color, label, value):
 
 
 def _sb_credit(role, names):
-    """Bloc crédits dans la sidebar."""
     return html.Div(
         style={"marginBottom": "10px"},
         children=[
@@ -77,7 +74,6 @@ def _sb_credit(role, names):
 
 
 def _sb_btn(label, btn_id, extra_style=None):
-    """Bouton export dans la sidebar."""
     base = {
         "width": "100%",
         "padding": "7px 14px",
@@ -300,6 +296,40 @@ def create_layout(df):
         ],
     )
 
+    # ── Modal plein écran flow map ─────────────────────────────
+    flowmap_modal = html.Div(
+        id="flowmap-fullscreen-modal",
+        style={
+            "display": "none", "position": "fixed", "inset": "0",
+            "background": "rgba(0,0,0,0.60)", "zIndex": "9999", "padding": "20px",
+        },
+        children=[
+            dbc.Card(
+                dbc.CardBody([
+                    html.Div([
+                        html.H5(
+                            "Flux de copublications — Plein écran",
+                            className="fw-bold mb-0",
+                            style={"color": PRIMARY},
+                        ),
+                        dbc.Button(
+                            "✕ Fermer",
+                            id="btn-flowmap-fullscreen-close",
+                            color="light",
+                            size="sm",
+                        ),
+                    ], className="d-flex justify-content-between align-items-center mb-2"),
+                    dcc.Graph(
+                        id="flow_map_fullscreen",
+                        config={"scrollZoom": True, "displayModeBar": True},
+                        style={"height": "calc(100vh - 120px)", "borderRadius": "10px"},
+                    ),
+                ]),
+                style={"height": "100%", "borderRadius": "14px", "overflow": "hidden"},
+            ),
+        ],
+    )
+
     # ── Onglets ────────────────────────────────────────────────
     tabs = dcc.Tabs(
         id="tabs",
@@ -346,7 +376,52 @@ def create_layout(df):
                 value="tab-evolution",
                 className="custom-tab",
                 selected_className="custom-tab--selected",
-                children=[evolution_tab_content],   # ← contenu extrait dans une variable
+                children=[evolution_tab_content],
+            ),
+            dcc.Tab(
+                label="🗺 Flux par centre",
+                value="tab-flowmap",
+                className="custom-tab",
+                selected_className="custom-tab--selected",
+                children=[
+                    dbc.Card(
+                        dbc.CardBody([
+                            # ── En-tête ──────────────────────────────────
+                            html.Div([
+                                html.H5(
+                                    "Flux de copublications par centre",
+                                    className="fw-bold mb-0",
+                                    style={"color": PRIMARY},
+                                ),
+                                html.Span(
+                                    "Arcs reliant chaque centre Inria à ses partenaires internationaux",
+                                    className="text-muted small",
+                                ),
+                            ], className="mb-3"),
+                            # ── Bouton plein écran ────────────────────────
+                            html.Div(
+                                dbc.Button(
+                                    "⛶ Plein écran",
+                                    id="btn-flowmap-fullscreen-open",
+                                    color="light",
+                                    size="sm",
+                                    className="mb-2",
+                                ),
+                                className="d-flex justify-content-end",
+                            ),
+                            # ── Carte ─────────────────────────────────────
+                            dcc.Graph(
+                                id="flow_map",
+                                config={"scrollZoom": True, "displayModeBar": True},
+                                style={"height": "580px", "borderRadius": "10px"},
+                            ),
+                            # ── Bloc légende/aide ─────────────────────────
+                            html.Div(id="flowmap-legend-block"),
+                        ]),
+                        className="shadow-sm mt-3",
+                        style={"borderRadius": "14px"},
+                    ),
+                ],
             ),
         ],
     )
@@ -412,8 +487,6 @@ def create_layout(df):
                     "flexDirection": "column",
                 },
                 children=[
-
-                    # ── Bouton fermeture ─────────────────────
                     html.Div(
                         style={
                             "display": "flex", "justifyContent": "flex-end",
@@ -437,13 +510,9 @@ def create_layout(df):
                             ),
                         ],
                     ),
-
-                    # ── Contenu scrollable ───────────────────
                     html.Div(
                         style={"padding": "16px 22px 28px", "flex": "1"},
                         children=[
-
-                            # ── Logos ────────────────────────
                             html.Div(
                                 style={
                                     "display": "flex", "alignItems": "center",
@@ -477,8 +546,6 @@ def create_layout(df):
                                     ),
                                 ],
                             ),
-
-                            # ── Titre ────────────────────────
                             html.Div(
                                 style={
                                     "borderLeft": f"3px solid {RED}",
@@ -498,12 +565,9 @@ def create_layout(df):
                                     }),
                                 ],
                             ),
-
-                            # ── Section Périmètre ─────────────
                             _sb_section("Périmètre"),
                             _sb_meta(RED, "Données\u00a0: ", "HAL · Inria"),
                             _sb_meta(RED, "Période\u00a0: ", "2017 – 2026"),
-
                             html.Div(
                                 style={
                                     "display": "flex", "alignItems": "flex-start",
@@ -530,8 +594,6 @@ def create_layout(df):
                                     ]),
                                 ],
                             ),
-
-                            # ── Section À propos ──────────────
                             _sb_section("À propos"),
                             html.P(
                                 "Le groupe Datalake, créé en 2022 au sein de la Direction de la culture et de l'information scientifique d'Inria,"
@@ -549,15 +611,11 @@ def create_layout(df):
                                     "lineHeight": "1.65", "marginBottom": "0",
                                 },
                             ),
-
-                            # ── Section Équipe ────────────────
                             _sb_section("Équipe"),
                             _sb_credit("Données & Analyses",
                                        "Kumar Guha · Daniel Da Silva · Andréa Nebot"),
                             _sb_credit("Visualisations", "Andréa Nebot"),
                             _sb_credit("Groupe", "Datalake · Inria"),
-
-                            # ── Section Exports ───────────────
                             _sb_section("Exports"),
                             dcc.Download(id="download-csv"),
                             _sb_btn("↓ Exporter les données CSV", "btn-export-csv"),
@@ -574,9 +632,7 @@ def create_layout(df):
         id="page-wrapper",
         children=[
             dcc.Store(id="store-data"),
-
             red_sidebar,
-
             html.Div(
                 className="inria-main",
                 children=[
@@ -594,8 +650,8 @@ def create_layout(df):
                     ),
                 ],
             ),
-
             sidebar,
+            flowmap_modal,   # ← modal rendu au niveau racine de la page
         ],
     )
 

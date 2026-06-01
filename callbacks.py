@@ -116,6 +116,90 @@ def add_glow_arc(fig, lat_curve, lon_curve, rgb="39,52,139"):
 
 
 # ============================================================
+#  Bloc légende + aide pour le flow map (réutilisable)
+# ============================================================
+def _flow_map_legend_block():
+    """Retourne le bloc HTML de légende/aide affiché sous la flow map."""
+    label_style = {"fontSize": "0.82rem", "color": "#374151", "marginLeft": "6px"}
+    sep = {"borderLeft": f"3px solid {PRIMARY}", "paddingLeft": "10px", "marginBottom": "8px"}
+
+    return html.Div([
+        dbc.Row([
+            # Colonne 1 — Épaisseur des arcs
+            dbc.Col([
+                html.Div([
+                    html.Span("Épaisseur des arcs", className="fw-bold",
+                              style={"fontSize": "0.85rem", "color": PRIMARY}),
+                    html.Div([
+                        html.Div([
+                            html.Span("▬", style={"fontSize": "1.3rem", "color": PRIMARY, "lineHeight": "1"}),
+                            html.Span(" Fort", style=label_style),
+                        ], className="d-flex align-items-center mb-1"),
+                        html.Div([
+                            html.Span("─", style={"fontSize": "1.1rem", "color": PRIMARY_LIGHT, "lineHeight": "1"}),
+                            html.Span(" Moyen", style=label_style),
+                        ], className="d-flex align-items-center mb-1"),
+                        html.Div([
+                            html.Span("·", style={"fontSize": "1.5rem", "color": ACCENT, "lineHeight": "1"}),
+                            html.Span(" Faible", style=label_style),
+                        ], className="d-flex align-items-center"),
+                    ], className="mt-1"),
+                ], style=sep),
+            ], md=4, sm=12, className="mb-3"),
+
+            # Colonne 2 — Comment lire cette carte
+            dbc.Col([
+                html.Div([
+                    html.Span("Comment lire cette carte", className="fw-bold",
+                              style={"fontSize": "0.85rem", "color": PRIMARY}),
+                    html.Ul([
+                        html.Li([html.B("●Centre Inria"), " — point d'origine des arcs"],
+                                style={"fontSize": "0.80rem", "marginBottom": "3px"}),
+                        html.Li([html.B("▶Pointe de flèche"), " — sens de la collaboration"],
+                                style={"fontSize": "0.80rem", "marginBottom": "3px"}),
+                        html.Li([html.B("▬Arc épais"), " = nombreuses copublications"],
+                                style={"fontSize": "0.80rem", "marginBottom": "3px"}),
+                        html.Li([html.B("─Arc fin"), " = peu de copublications"],
+                                style={"fontSize": "0.80rem"}),
+                    ], className="mt-1 mb-0 ps-3"),
+                ], style=sep),
+            ], md=4, sm=12, className="mb-3"),
+
+            # Colonne 3 — Conseils
+            dbc.Col([
+                html.Div([
+                    html.Span("Conseils d'utilisation", className="fw-bold",
+                              style={"fontSize": "0.85rem", "color": PRIMARY}),
+                    html.Ul([
+                        html.Li(
+                            "Utilisez les filtres Centre en haut de page pour isoler un ou plusieurs centres "
+                            "et réduire le nombre d'arcs affichés.",
+                            style={"fontSize": "0.80rem", "marginBottom": "3px"},
+                        ),
+                        html.Li(
+                            "La molette permet de zoomer sur une région. Survolez un arc pour voir le détail "
+                            "de la collaboration (ville, pays, nombre de publications).",
+                            style={"fontSize": "0.80rem", "marginBottom": "3px"},
+                        ),
+                        html.Li(
+                            "Les arcs sont classés en 3 niveaux d'épaisseur : fort (top 25 %), "
+                            "moyen (25–50 %), faible (bas 50 %).",
+                            style={"fontSize": "0.80rem"},
+                        ),
+                    ], className="mt-1 mb-0 ps-3"),
+                ], style=sep),
+            ], md=4, sm=12, className="mb-3"),
+        ]),
+    ], style={
+        "backgroundColor": "#f8fbff",
+        "border": f"1px solid {PRIMARY_LIGHT}40",
+        "borderRadius": "12px",
+        "padding": "14px 18px",
+        "marginTop": "12px",
+    })
+
+
+# ============================================================
 #  REGISTER CALLBACKS
 # ============================================================
 def register_callbacks(app, df_base):
@@ -244,17 +328,17 @@ def register_callbacks(app, df_base):
         )
 
     # ========================================================
-    # 1 — KPI + GRAPHIQUES PRINCIPAUX + CARTE + FLOW MAP
+    # 1 — KPI + GRAPHIQUES PRINCIPAUX + CARTE
+    #    
     # ========================================================
     @app.callback(
         [
-            Output("kpi-zone",    "children"),
-            Output("bar_annee",   "figure"),
-            Output("top_pays",    "figure"),
-            Output("top_villes",  "figure"),
-            Output("top_orgs",    "figure"),
-            Output("map",         "figure"),
-            Output("flow_map",    "figure"),
+            Output("kpi-zone",   "children"),
+            Output("bar_annee",  "figure"),
+            Output("top_pays",   "figure"),
+            Output("top_villes", "figure"),
+            Output("top_orgs",   "figure"),
+            Output("map",        "figure"),
         ],
         [
             Input("centre", "value"), Input("equipe", "value"),
@@ -358,6 +442,32 @@ def register_callbacks(app, df_base):
                                               bgcolor="rgba(255,255,255,0.85)",
                                               bordercolor="rgba(0,0,0,0.1)", borderwidth=0.5))
 
+        return kpis, fig_year, fig_pays, fig_villes, fig_orgs, fig_map
+
+    # ========================================================
+    # 1bis — FLOW MAP (onglet dédié "tab-flowmap")
+    # ========================================================
+    @app.callback(
+        [
+            Output("flow_map",            "figure"),
+            Output("flowmap-legend-block", "children"),
+        ],
+        [
+            Input("centre", "value"), Input("equipe", "value"),
+            Input("pays",   "value"), Input("ville",  "value"),
+            Input("org",    "value"), Input("annee",  "value"),
+            Input("tabs",   "value"),
+            Input("store-data", "data"),
+        ],
+    )
+    def update_flowmap(centres, equipes, pays, villes, orgs, annees, tab, stored_data):
+        # Calcul uniquement quand l'onglet flux est actif
+        if tab != "tab-flowmap":
+            return no_update, no_update
+
+        df  = pd.DataFrame(stored_data) if stored_data is not None else df_base
+        dff = filter_df(df, centres, equipes, pays, villes, orgs, annees)
+
         def hex_to_rgb(hex_color):
             h = hex_color.lstrip("#")
             if len(h) == 3: h = "".join([c * 2 for c in h])
@@ -441,6 +551,7 @@ def register_callbacks(app, df_base):
             fig_flow.update_layout(
                 paper_bgcolor="white", plot_bgcolor="white", font=dict(color="#1e293b"),
                 mapbox=dict(style="open-street-map", center=dict(lat=lat_c2, lon=lon_c2), zoom=auto_zoom),
+                height=580,
                 margin=dict(l=0, r=0, t=0, b=0),
                 legend=dict(orientation="v", x=0.01, xanchor="left", y=0.99, yanchor="top",
                             bgcolor="rgba(255,255,255,0.88)", bordercolor="rgba(0,0,0,0.12)",
@@ -450,30 +561,30 @@ def register_callbacks(app, df_base):
                                 bordercolor="rgba(0,0,0,0.2)"),
                 uirevision="flow_map_stable")
 
-        return kpis, fig_year, fig_pays, fig_villes, fig_orgs, fig_map, fig_flow
+        return fig_flow, _flow_map_legend_block()
 
-    # ========================================================
-    # 1bis — FLOW MAP plein écran
-    # ========================================================
-    @app.callback(
-        Output("flowmap-fullscreen-modal", "style"),
-        [Input("btn-flowmap-fullscreen-open", "n_clicks"), Input("btn-flowmap-fullscreen-close", "n_clicks")],
-        State("flowmap-fullscreen-modal", "style"),
-        prevent_initial_call=True,
-    )
-    def toggle_flowmap_fullscreen(open_clicks, close_clicks, current_style):
-        ctx = dash.callback_context
-        if not ctx.triggered: return current_style
-        trigger = ctx.triggered[0]["prop_id"].split(".")[0]
-        return {"display": "block"} if trigger == "btn-flowmap-fullscreen-open" else {"display": "none"}
+    # # ========================================================
+    # # 1ter — FLOW MAP plein écran
+    # # ========================================================
+    # @app.callback(
+    #     Output("flowmap-fullscreen-modal", "style"),
+    #     [Input("btn-flowmap-fullscreen-open", "n_clicks"), Input("btn-flowmap-fullscreen-close", "n_clicks")],
+    #     State("flowmap-fullscreen-modal", "style"),
+    #     prevent_initial_call=True,
+    # )
+    # def toggle_flowmap_fullscreen(open_clicks, close_clicks, current_style):
+    #     ctx = dash.callback_context
+    #     if not ctx.triggered: return current_style
+    #     trigger = ctx.triggered[0]["prop_id"].split(".")[0]
+    #     return {"display": "block"} if trigger == "btn-flowmap-fullscreen-open" else {"display": "none"}
 
-    @app.callback(
-        Output("flow_map_fullscreen", "figure"),
-        Input("flow_map", "figure"),
-        prevent_initial_call=True,
-    )
-    def sync_flowmap_fullscreen(fig):
-        return fig if fig is not None else no_update
+    # @app.callback(
+    #     Output("flow_map_fullscreen", "figure"),
+    #     Input("flow_map", "figure"),
+    #     prevent_initial_call=True,
+    # )
+    # def sync_flowmap_fullscreen(fig):
+    #     return fig if fig is not None else no_update
 
     # ========================================================
     # 2 — WORDCLOUD
@@ -845,7 +956,7 @@ def register_callbacks(app, df_base):
         return current_style
 
     # ========================================================
-    # 4 — Onglet "Évolution des copublications" — FIX COMPLET
+    # 4 — Onglet "Évolution des copublications"
     # ========================================================
     @app.callback(
         [
@@ -867,8 +978,6 @@ def register_callbacks(app, df_base):
         ],
     )
     def update_evolution(centres, equipes, pays, villes, orgs, annees, tab, stored_data):
-
-        # ── Garde : ne calcule que quand l'onglet est actif ──
         if tab != "tab-evolution":
             return no_update, no_update, no_update, no_update, no_update
 
@@ -885,7 +994,6 @@ def register_callbacks(app, df_base):
             ], style={"backgroundColor":"#f8fbff","borderRadius":"12px","border":f"1px solid {PRIMARY_LIGHT}30"})
             return _empty_fig(), _empty_fig(), _empty_fig(), _empty_fig(), story
 
-        # ── 1) SUNBURST ──
         if all(c in dff.columns for c in ["Centre","Equipe","Organisme_copubliant"]):
             sun_df = (dff.groupby(["Centre","Equipe","Organisme_copubliant"], observed=True)["HalID"]
                       .nunique().reset_index(name="Publications"))
@@ -897,7 +1005,6 @@ def register_callbacks(app, df_base):
         else:
             fig_sunburst = _empty_fig("Hiérarchie (colonnes manquantes)")
 
-        # ── 2) TEAM TIMELINE ──
         if all(c in dff.columns for c in ["Année","Equipe"]):
             team_df = (dff.groupby(["Année","Equipe"], observed=True)["HalID"]
                        .nunique().reset_index(name="Publications"))
@@ -910,7 +1017,6 @@ def register_callbacks(app, df_base):
         else:
             fig_team = _empty_fig("Évolution par équipe (colonnes manquantes)")
 
-        # ── 3) SANKEY ──
         if all(c in dff.columns for c in ["Centre","Pays","Organisme_copubliant"]):
             sankey_df = (dff.groupby(["Centre","Pays","Organisme_copubliant"], observed=True)["HalID"]
                          .nunique().reset_index(name="Publications")
@@ -937,7 +1043,6 @@ def register_callbacks(app, df_base):
         else:
             fig_sankey = _empty_fig("Flux (colonnes manquantes)")
 
-        # ── 4) RADAR ──
         if "Centre" in dff.columns and "Domaine(s)" in dff.columns:
             dom_df = (dff.dropna(subset=["Centre","Domaine(s)"])
                       .groupby(["Centre","Domaine(s)"], observed=True)["HalID"]
@@ -1004,7 +1109,6 @@ def register_callbacks(app, df_base):
         else:
             fig_radar = _empty_fig("Profil par domaine (colonnes Centre / Domaine(s) manquantes)")
 
-        # ── 5) STORY ──
         total_pubs = dff["HalID"].nunique() if "HalID" in dff.columns else len(dff)
         nb_pays    = dff["Pays"].nunique()   if "Pays"  in dff.columns else 0
         nb_orgs    = dff["Organisme_copubliant"].nunique() if "Organisme_copubliant" in dff.columns else 0
