@@ -1145,7 +1145,7 @@ def register_callbacks(app, df_base):
 
         df  = pd.DataFrame(stored_data) if stored_data is not None else df_base
         dff = filter_df(df, centres, equipes, pays, villes, orgs, annees)
-        top_n = top_n or 10
+        top_n = top_n if top_n is not None else 1
         empty_fig = go.Figure().update_layout(template=GRAPH_TEMPLATE, title="Aucune donnée pour les filtres actuels")
 
         if dff.empty or "Pays" not in dff.columns or "Année" not in dff.columns:

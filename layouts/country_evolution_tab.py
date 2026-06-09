@@ -56,11 +56,11 @@ def country_evolution_tab_layout():
                                     ),
                                     dcc.Slider(
                                         id="country-top-n",
-                                        min=5,
-                                        max=30,
-                                        step=5,
-                                        value=10,
-                                        marks={i: str(i) for i in range(5, 35, 5)},
+                                        min=1,
+                                        max=50,
+                                        step=1,
+                                        value=1,
+                                        marks={i: str(i) for i in range(1, 55, 5)},
                                         tooltip={"placement": "bottom", "always_visible": False},
                                     ),
                                 ]
