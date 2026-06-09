@@ -15,13 +15,14 @@ def create_app():
     external_scripts = [
         "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
         "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+        "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css",
     ]
 
     app = Dash(
         __name__,
         requests_pathname_prefix="/copublications-dashboard/",
         routes_pathname_prefix="/copublications-dashboard/",
-        external_stylesheets=[THEME],
+        external_stylesheets= [THEME, "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"],
         external_scripts=external_scripts,
         suppress_callback_exceptions=True,   # ← indispensable pour les tabs
         meta_tags=[
