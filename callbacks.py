@@ -449,7 +449,7 @@ def register_callbacks(app, df_base):
     # ========================================================
     @app.callback(
         [
-            Output("flow_map",            "figure"),
+            Output("flow_map","figure"),
             Output("flowmap-legend-block", "children"),
         ],
         [
@@ -563,28 +563,28 @@ def register_callbacks(app, df_base):
 
         return fig_flow, _flow_map_legend_block()
 
-    # # ========================================================
-    # # 1ter — FLOW MAP plein écran
-    # # ========================================================
-    # @app.callback(
-    #     Output("flowmap-fullscreen-modal", "style"),
-    #     [Input("btn-flowmap-fullscreen-open", "n_clicks"), Input("btn-flowmap-fullscreen-close", "n_clicks")],
-    #     State("flowmap-fullscreen-modal", "style"),
-    #     prevent_initial_call=True,
-    # )
-    # def toggle_flowmap_fullscreen(open_clicks, close_clicks, current_style):
-    #     ctx = dash.callback_context
-    #     if not ctx.triggered: return current_style
-    #     trigger = ctx.triggered[0]["prop_id"].split(".")[0]
-    #     return {"display": "block"} if trigger == "btn-flowmap-fullscreen-open" else {"display": "none"}
+    # ========================================================
+    # 1ter — FLOW MAP plein écran
+    # ========================================================
+    @app.callback(
+        Output("flowmap-fullscreen-modal", "style"),
+        [Input("btn-flowmap-fullscreen-open", "n_clicks"), Input("btn-flowmap-fullscreen-close", "n_clicks")],
+        State("flowmap-fullscreen-modal", "style"),
+        prevent_initial_call=True,
+    )
+    def toggle_flowmap_fullscreen(open_clicks, close_clicks, current_style):
+        ctx = dash.callback_context
+        if not ctx.triggered: return current_style
+        trigger = ctx.triggered[0]["prop_id"].split(".")[0]
+        return {"display": "block"} if trigger == "btn-flowmap-fullscreen-open" else {"display": "none"}
 
-    # @app.callback(
-    #     Output("flow_map_fullscreen", "figure"),
-    #     Input("flow_map", "figure"),
-    #     prevent_initial_call=True,
-    # )
-    # def sync_flowmap_fullscreen(fig):
-    #     return fig if fig is not None else no_update
+    @app.callback(
+        Output("flow_map_fullscreen", "figure"),
+        Input("flow_map", "figure"),
+        prevent_initial_call=True,
+    )
+    def sync_flowmap_fullscreen(fig):
+        return fig if fig is not None else no_update
 
     # ========================================================
     # 2 — WORDCLOUD
