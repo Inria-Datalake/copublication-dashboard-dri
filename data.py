@@ -245,7 +245,8 @@ def load_data():
 
     print("[INIT] Premier chargement des données...")
 
-    create_csv_from_xlsx(force=False)
+    if not CSV_PATH.exists():
+        create_csv_from_xlsx(force=False)
     _build_parquet()
 
     if PARQUET_PATH.exists():

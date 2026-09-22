@@ -20,8 +20,8 @@ def create_app():
 
     app = Dash(
         __name__,
-        requests_pathname_prefix="/copublications-dashboard/",
-        routes_pathname_prefix="/copublications-dashboard/",
+        requests_pathname_prefix="/copublication-dashboard-dri/",
+        routes_pathname_prefix="/copublication-dashboard-dri/",
         external_stylesheets= [THEME, "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"],
         external_scripts=external_scripts,
         suppress_callback_exceptions=True,   # ← indispensable pour les tabs
