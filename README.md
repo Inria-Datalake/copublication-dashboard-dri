@@ -1,6 +1,6 @@
 # CoPubli DRI
 
-Dashboard web de visualisation et d'analyse des **copublications scientifiques** de l'Inria DataLake.
+Dashboard web de visualisation et d'analyse des **copublications scientifiques**.
 
 Cette version correspond à l'instance **DRI (Direction de la Recherche et de l'Innovation)** de CoPubli.
 
@@ -8,7 +8,7 @@ Cette version correspond à l'instance **DRI (Direction de la Recherche et de l'
 > Data Analyst / Scientist  
 > Membre de l'équipe **DATALAKE**
 
-L'application est développée pour faciliter l'exploration, l'analyse et la visualisation des collaborations scientifiques et des copublications.
+CoPubli DRI permet d'explorer et de visualiser des indicateurs liés aux copublications et aux collaborations scientifiques.
 
 ---
 
@@ -17,53 +17,58 @@ L'application est développée pour faciliter l'exploration, l'analyse et la vis
 - [1. Architecture](#1-architecture)
 - [2. Prérequis](#2-prérequis)
 - [3. Installation locale](#3-installation-locale)
-- [4. Données](#4-données)
+- [4. Gestion des données](#4-gestion-des-données)
 - [5. Lancer CoPubli DRI](#5-lancer-copubli-dri)
 - [6. Déploiement sur une VM](#6-déploiement-sur-une-vm)
 - [7. Configuration SSH](#7-configuration-ssh)
-- [8. Cloner et mettre à jour le projet depuis GitHub](#8-cloner-et-mettre-à-jour-le-projet-depuis-github)
-- [9. Déployer avec Nginx](#9-déployer-avec-nginx)
-- [10. Faire tourner CoPubli automatiquement](#10-faire-tourner-copubli-automatiquement)
+- [8. GitHub et mise à jour du projet](#8-github-et-mise-à-jour-du-projet)
+- [9. Déploiement avec Nginx](#9-déploiement-avec-nginx)
+- [10. Exécution avec systemd](#10-exécution-avec-systemd)
 - [11. Mise à jour de l'application](#11-mise-à-jour-de-lapplication)
 - [12. Sécurité](#12-sécurité)
 - [13. Dépannage](#13-dépannage)
-- [14. Organisation des fichiers](#14-organisation-des-fichiers)
+- [14. Organisation du projet](#14-organisation-du-projet)
 - [15. Développement](#15-développement)
+- [16. Auteur et équipe](#16-auteur-et-équipe)
 
 ---
 
 # 1. Architecture
 
-CoPubli DRI est composé de plusieurs éléments :
+CoPubli DRI est une application web basée sur **Python / Dash**.
+
+L'architecture de déploiement recommandée est :
 
 ```text
                          ┌─────────────────────┐
                          │      Utilisateur    │
                          │      Navigateur     │
                          └──────────┬──────────┘
-                                    │ HTTP/HTTPS
+                                    │
+                                    │ HTTP / HTTPS
                                     ▼
                          ┌─────────────────────┐
                          │       Nginx         │
-                         │   reverse proxy     │
+                         │   Reverse Proxy     │
                          └──────────┬──────────┘
                                     │
+                                    │ HTTP local
                                     ▼
                          ┌─────────────────────┐
+                         │     CoPubli DRI     │
                          │     Dash / Flask    │
-                         │     application     │
                          └──────────┬──────────┘
                                     │
                                     ▼
                          ┌─────────────────────┐
-                         │ Données locales DRI │
-                         │   CSV / Parquet     │
+                         │    Données locales  │
+                         │     DRI / Parquet   │
                          └─────────────────────┘
 ```
 
-GitHub contient le **code source** de l'application.
+Le dépôt Git contient principalement **le code source**.
 
-Les données volumineuses ou sensibles utilisées par l'instance DRI doivent rester **hors du dépôt Git**.
+Les données de production et les secrets doivent rester en dehors du dépôt.
 
 ---
 
@@ -78,25 +83,25 @@ Prévoir :
 - pip
 - un navigateur web
 
-Vérifier :
+Vérifier l'installation :
 
 ```bash
 python3 --version
 git --version
-pip --version
+python3 -m pip --version
 ```
 
-## Déploiement VM
+## Déploiement sur une VM
 
-Pour une VM Linux :
+Prévoir :
 
-- Ubuntu/Debian recommandé
+- Linux, typiquement Ubuntu/Debian
 - Python 3
 - Git
 - Nginx
-- accès SSH
-- utilisateur Linux dédié ou compte de déploiement
-- accès aux données DRI
+- accès SSH à la VM
+- un compte de déploiement
+- accès aux données nécessaires à l'application
 
 ---
 
@@ -104,12 +109,14 @@ Pour une VM Linux :
 
 ## 3.1 Cloner le dépôt
 
+Avec SSH :
+
 ```bash
 git clone git@github.com:Inria-Datalake/copublication-dashboard-dri.git
 cd copublication-dashboard-dri
 ```
 
-Pour utiliser HTTPS :
+Ou avec HTTPS :
 
 ```bash
 git clone https://github.com/Inria-Datalake/copublication-dashboard-dri.git
@@ -124,7 +131,7 @@ cd copublication-dashboard-dri
 python3 -m venv .venv
 ```
 
-Activer l'environnement :
+Activer l'environnement.
 
 ### Linux / macOS
 
@@ -149,51 +156,74 @@ pip install -r requirements.txt
 
 ---
 
-# 4. Données
+# 4. Gestion des données
 
-## Important
+## ⚠️ Important
 
-Les données de production **ne doivent pas être ajoutées au dépôt Git**.
+Les données utilisées par CoPubli DRI peuvent contenir des informations qui ne doivent pas être publiées.
 
-En particulier, ne jamais commiter :
+Les fichiers de données ne doivent donc **pas être versionnés dans Git**.
+
+Ne jamais ajouter au dépôt :
 
 ```text
 *.csv
 *.xlsx
 *.parquet
+```
+
+De même, ne jamais versionner :
+
+```text
 .env
 *.pem
 *.key
+*.p12
+*.pfx
 id_rsa
 id_ed25519
 ```
 
-Le projet contient un `.gitignore` destiné à empêcher leur publication.
+Le fichier `.gitignore` du projet est prévu pour empêcher l'ajout accidentel de ces fichiers.
 
-Une donnée DRI peut être stockée localement, par exemple :
+---
+
+## Exemple d'organisation des données
+
+Sur une machine de déploiement, les données peuvent être stockées dans un répertoire séparé du code :
 
 ```text
-/home/<user>/data/copubli/
+<DATA_DIR>/
 └── dashboard_dri_v3.parquet
 ```
 
-Les données de production doivent rester séparées du code source autant que possible.
+Par exemple :
 
-Avant chaque commit :
+```text
+<DATA_DIR> = /var/lib/<APPLICATION_NAME>/data
+```
+
+Le chemin réel dépend de l'environnement de déploiement et ne doit pas être inscrit dans le dépôt public.
+
+---
+
+## Vérifier avant un commit
+
+Avant de publier une modification :
 
 ```bash
 git status
 ```
 
-Vérifier également :
+Puis, si nécessaire :
 
 ```bash
 git ls-files | grep -E '(\.csv$|\.xlsx$|\.parquet$|\.pem$|\.key$|id_rsa|id_ed25519)'
 ```
 
-Cette commande ne devrait retourner **aucune donnée ou clé sensible**.
+Cette commande ne doit pas retourner de données ou de clés sensibles.
 
-> Ne jamais utiliser `git add -f` pour forcer l'ajout d'un fichier de données ou d'une clé.
+> Ne jamais utiliser `git add -f` pour forcer l'ajout d'un fichier ignoré contenant des données ou des secrets.
 
 ---
 
@@ -206,64 +236,98 @@ source .venv/bin/activate
 python app.py
 ```
 
-L'application Dash démarre alors sur l'adresse et le port configurés dans `app.py`.
+L'application écoute alors sur le port configuré dans l'application.
 
-En développement, accéder à l'application depuis le navigateur via :
+En développement, elle peut généralement être consultée depuis :
 
 ```text
-http://127.0.0.1:<PORT>
+http://127.0.0.1:<COPUBLI_PORT>
 ```
 
-Le port exact doit être vérifié dans la configuration de l'application.
+où :
+
+```text
+<COPUBLI_PORT>
+```
+
+désigne le port choisi pour l'instance.
+
+Le port réel doit être configuré selon l'environnement et ne doit pas être supposé à partir de cette documentation.
 
 ---
 
 # 6. Déploiement sur une VM
 
-## 6.1 Connexion à la VM
+## 6.1 Connexion
 
-Depuis le poste local :
-
-```bash
-ssh <utilisateur>@<adresse-vm>
-```
-
-Si un alias SSH est configuré :
+Depuis le poste d'administration :
 
 ```bash
-ssh pocdatalake
+ssh <DEPLOY_USER>@<VM_HOST>
 ```
+
+ou avec un alias défini dans la configuration SSH :
+
+```bash
+ssh <VM_ALIAS>
+```
+
+Les valeurs :
+
+```text
+<DEPLOY_USER>
+<VM_HOST>
+<VM_ALIAS>
+```
+
+sont propres à l'infrastructure et ne doivent pas être publiées dans le README.
 
 ---
 
 ## 6.2 Organisation recommandée
 
-Il est recommandé de séparer le code et les données :
+Une organisation possible est :
 
 ```text
-/home/<user>/
-├── apps/
-│   └── copublication-dashboard-dri/
+<APP_ROOT>/
+├── copublication-dashboard-dri/
+│   ├── app.py
+│   ├── callbacks.py
+│   ├── data.py
+│   ├── layouts/
+│   └── assets/
 │
-└── data/
-    └── copubli/
+└── ...
 ```
 
-Les données DRI ne doivent pas être mélangées avec les fichiers versionnés par Git lorsque cela peut être évité.
+Les données peuvent être séparées :
+
+```text
+<DATA_ROOT>/
+└── dashboard_dri_v3.parquet
+```
+
+L'idée importante est :
+
+```text
+Code Git
+    ≠
+Données de production
+```
 
 ---
 
 ## 6.3 Cloner le projet
 
 ```bash
-cd ~/apps
+cd <APPS_ROOT>
+
 git clone git@github.com:Inria-Datalake/copublication-dashboard-dri.git
+
 cd copublication-dashboard-dri
 ```
 
----
-
-## 6.4 Créer l'environnement Python
+Créer ensuite l'environnement Python :
 
 ```bash
 python3 -m venv .venv
@@ -281,11 +345,19 @@ SSH peut être utilisé pour deux usages distincts :
 1. se connecter à la VM ;
 2. permettre à la VM d'accéder à GitHub.
 
-Ces deux usages doivent être séparés autant que possible.
+Il est recommandé d'utiliser **des clés distinctes** pour ces usages.
 
-## 7.1 SSH poste local → VM
+---
 
-La clé privée reste uniquement sur le poste local.
+## 7.1 Connexion vers la VM
+
+Depuis le poste d'administration :
+
+```bash
+ssh-keygen -t ed25519
+```
+
+La clé privée reste sur le poste d'administration.
 
 La clé publique peut être installée sur la VM dans :
 
@@ -293,81 +365,115 @@ La clé publique peut être installée sur la VM dans :
 ~/.ssh/authorized_keys
 ```
 
-Ne jamais copier une clé privée sur une VM simplement pour permettre une connexion SSH.
+**Ne jamais copier la clé privée sur la VM simplement pour permettre la connexion.**
 
-## 7.2 SSH VM → GitHub
+---
 
-Si la VM doit récupérer le code depuis GitHub, créer une clé dédiée :
+## 7.2 Accès de la VM à GitHub
+
+Si la VM doit effectuer :
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/github_pocdatalake
+git clone
+git pull
+git fetch
 ```
 
-La clé privée :
+via SSH, créer une clé dédiée.
+
+Exemple :
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/<GITHUB_SSH_KEY>
+```
+
+Cela crée :
 
 ```text
-~/.ssh/github_pocdatalake
+~/.ssh/<GITHUB_SSH_KEY>
+~/.ssh/<GITHUB_SSH_KEY>.pub
 ```
 
-reste uniquement sur la VM.
+La clé privée reste exclusivement sur la VM.
 
-La clé publique :
+La clé publique peut être enregistrée auprès de GitHub selon la politique de l'organisation.
 
-```text
-~/.ssh/github_pocdatalake.pub
-```
-
-peut être enregistrée dans GitHub selon la politique de l'organisation.
+---
 
 ## 7.3 Configuration SSH
 
-Dans :
+Modifier :
 
 ```bash
 nano ~/.ssh/config
 ```
 
-Exemple :
+Exemple générique :
 
 ```sshconfig
 Host github.com
     HostName github.com
     User git
-    IdentityFile ~/.ssh/github_pocdatalake
+    IdentityFile ~/.ssh/<GITHUB_SSH_KEY>
     IdentitiesOnly yes
 ```
 
-Puis :
+Protéger les permissions :
 
 ```bash
+chmod 700 ~/.ssh
 chmod 600 ~/.ssh/config
-chmod 600 ~/.ssh/github_pocdatalake
-chmod 644 ~/.ssh/github_pocdatalake.pub
+chmod 600 ~/.ssh/<GITHUB_SSH_KEY>
+chmod 644 ~/.ssh/<GITHUB_SSH_KEY>.pub
 ```
 
-Tester :
+---
+
+## 7.4 Tester l'accès GitHub
 
 ```bash
 ssh -T git@github.com
 ```
 
-Un résultat du type :
+Un résultat similaire à :
 
 ```text
-Hi <github-user>! You've successfully authenticated, but GitHub does not provide shell access.
+Hi <GITHUB_USER>! You've successfully authenticated, but GitHub does not provide shell access.
 ```
 
 indique que l'authentification fonctionne.
 
 ---
 
-# 8. Cloner et mettre à jour le projet depuis GitHub
+## 7.5 Vérifier quelle clé est utilisée
+
+```bash
+ssh -G github.com | grep -i identityfile
+```
+
+Puis :
+
+```bash
+ssh-keygen -lf ~/.ssh/<GITHUB_SSH_KEY>
+```
+
+Ne jamais afficher le contenu d'une clé privée avec :
+
+```bash
+cat ~/.ssh/<GITHUB_SSH_KEY>
+```
+
+---
+
+# 8. GitHub et mise à jour du projet
 
 ## Premier déploiement
 
 ```bash
-cd ~/apps
+cd <APPS_ROOT>
+
 git clone git@github.com:Inria-Datalake/copublication-dashboard-dri.git
+
 cd copublication-dashboard-dri
 ```
 
@@ -378,43 +484,61 @@ git remote -v
 git branch -vv
 ```
 
+---
+
 ## Mise à jour
 
+Avant toute mise à jour :
+
 ```bash
-cd ~/apps/copublication-dashboard-dri
 git status
+```
+
+Si le dépôt est propre :
+
+```bash
 git pull --ff-only origin main
 ```
 
-Puis :
+Puis mettre à jour les dépendances :
 
 ```bash
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Redémarrer ensuite l'application si elle tourne comme service.
+Redémarrer ensuite le service applicatif si nécessaire.
 
 ---
 
-# 9. Déployer avec Nginx
+# 9. Déploiement avec Nginx
 
-Nginx sert de **reverse proxy** devant l'application Dash.
+Nginx peut servir de **reverse proxy** devant CoPubli.
+
+Architecture :
 
 ```text
-Navigateur
-    │
-    │ HTTPS
-    ▼
-  Nginx
-    │
-    │ HTTP local
-    ▼
-Dash / Flask
-127.0.0.1:<PORT>
+Internet
+   │
+   │ HTTPS
+   ▼
+┌───────────────┐
+│     Nginx     │
+└───────┬───────┘
+        │
+        │ HTTP local
+        ▼
+┌───────────────┐
+│  CoPubli DRI  │
+│ 127.0.0.1:<P> │
+└───────────────┘
 ```
 
+---
+
 ## 9.1 Installer Nginx
+
+Sur Ubuntu/Debian :
 
 ```bash
 sudo apt update
@@ -427,23 +551,25 @@ Vérifier :
 sudo systemctl status nginx
 ```
 
-## 9.2 Configuration
+---
 
-Créer :
+## 9.2 Créer la configuration
+
+Créer un fichier Nginx :
 
 ```bash
-sudo nano /etc/nginx/sites-available/copubli-dri
+sudo nano /etc/nginx/sites-available/<NGINX_SITE_NAME>
 ```
 
-Exemple :
+Exemple générique :
 
 ```nginx
 server {
     listen 80;
-    server_name copubli.example.org;
+    server_name <COPUBLI_DOMAIN>;
 
     location / {
-        proxy_pass http://127.0.0.1:8050;
+        proxy_pass http://127.0.0.1:<COPUBLI_PORT>;
 
         proxy_http_version 1.1;
 
@@ -461,40 +587,63 @@ server {
 }
 ```
 
-Adapter le nom DNS et le port à l'installation réelle.
+Les valeurs suivantes doivent rester propres à l'environnement :
 
-Activer :
+```text
+<COPUBLI_DOMAIN>
+<COPUBLI_PORT>
+<NGINX_SITE_NAME>
+```
+
+---
+
+## 9.3 Activer le site
 
 ```bash
 sudo ln -s \
-  /etc/nginx/sites-available/copubli-dri \
-  /etc/nginx/sites-enabled/copubli-dri
+    /etc/nginx/sites-available/<NGINX_SITE_NAME> \
+    /etc/nginx/sites-enabled/<NGINX_SITE_NAME>
 ```
 
-Tester :
+Tester la configuration :
 
 ```bash
 sudo nginx -t
 ```
 
-Puis :
+Puis recharger :
 
 ```bash
 sudo systemctl reload nginx
 ```
 
-Pour une instance exposée sur Internet, configurer également HTTPS/TLS et les règles de sécurité adaptées à l'infrastructure.
+---
+
+## 9.4 HTTPS
+
+Pour une application accessible depuis Internet, utiliser HTTPS.
+
+Le certificat TLS doit être géré **au niveau de l'infrastructure** et ne doit jamais être commité dans Git.
+
+Ne jamais placer dans le dépôt :
+
+```text
+*.pem
+*.key
+*.p12
+*.pfx
+```
 
 ---
 
-# 10. Faire tourner CoPubli automatiquement
+# 10. Exécution avec systemd
 
-Pour une VM de production, utiliser **systemd** plutôt qu'un terminal SSH ouvert.
+Pour une VM de production, il est recommandé d'exécuter CoPubli avec **systemd** plutôt que dans une session SSH interactive.
 
-Créer :
+Créer un service :
 
 ```bash
-sudo nano /etc/systemd/system/copubli-dri.service
+sudo nano /etc/systemd/system/<COPUBLI_SERVICE>.service
 ```
 
 Exemple :
@@ -507,14 +656,14 @@ After=network.target
 [Service]
 Type=simple
 
-User=abapst
-Group=abapst
+User=<DEPLOY_USER>
+Group=<DEPLOY_USER>
 
-WorkingDirectory=/home/abapst/apps/copublication-dashboard-dri
+WorkingDirectory=<APP_DIR>
 
-Environment="PATH=/home/abapst/apps/copublication-dashboard-dri/.venv/bin"
+Environment="PATH=<APP_DIR>/.venv/bin"
 
-ExecStart=/home/abapst/apps/copublication-dashboard-dri/.venv/bin/python app.py
+ExecStart=<APP_DIR>/.venv/bin/python app.py
 
 Restart=always
 RestartSec=5
@@ -523,35 +672,57 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-Adapter les chemins et l'utilisateur à la VM.
+Les valeurs :
 
-Activer :
+```text
+<DEPLOY_USER>
+<APP_DIR>
+<COPUBLI_SERVICE>
+```
+
+doivent être adaptées à l'environnement de déploiement.
+
+---
+
+## Activer le service
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable copubli-dri
-sudo systemctl start copubli-dri
+sudo systemctl enable <COPUBLI_SERVICE>
+sudo systemctl start <COPUBLI_SERVICE>
 ```
 
 Vérifier :
 
 ```bash
-sudo systemctl status copubli-dri
+sudo systemctl status <COPUBLI_SERVICE>
 ```
 
-Logs :
+Consulter les logs :
 
 ```bash
-sudo journalctl -u copubli-dri -f
+sudo journalctl -u <COPUBLI_SERVICE> -f
 ```
 
 ---
 
 # 11. Mise à jour de l'application
 
+Procédure recommandée :
+
 ```bash
-cd ~/apps/copublication-dashboard-dri
+cd <APP_DIR>
+```
+
+Vérifier :
+
+```bash
 git status
+```
+
+Récupérer les modifications :
+
+```bash
 git pull --ff-only origin main
 ```
 
@@ -565,73 +736,129 @@ pip install -r requirements.txt
 Redémarrer :
 
 ```bash
-sudo systemctl restart copubli-dri
+sudo systemctl restart <COPUBLI_SERVICE>
 ```
 
 Vérifier :
 
 ```bash
-sudo systemctl status copubli-dri
+sudo systemctl status <COPUBLI_SERVICE>
 ```
 
-Puis :
+Consulter les derniers logs :
 
 ```bash
-sudo journalctl -u copubli-dri -n 100 --no-pager
+sudo journalctl -u <COPUBLI_SERVICE> -n 100 --no-pager
 ```
 
 ---
 
 # 12. Sécurité
 
-## Ne jamais commiter de secrets
+## 12.1 Ne jamais versionner de secrets
 
-Ne jamais ajouter :
+Ne jamais ajouter au dépôt :
 
 ```text
 .env
 *.pem
 *.key
-id_rsa
-id_ed25519
 *.p12
 *.pfx
+id_rsa
+id_ed25519
+```
+
+Ni les données :
+
+```text
 *.csv
 *.xlsx
 *.parquet
 ```
 
-Avant chaque push :
+---
+
+## 12.2 Vérification avant publication
+
+Avant un commit :
 
 ```bash
 git status
+```
+
+Puis :
+
+```bash
 git diff --cached --stat
 ```
 
-Les données de production et les secrets doivent rester hors du dépôt Git.
+et, si nécessaire :
 
-## Clés privées
+```bash
+git diff --cached
+```
 
-Une clé privée SSH ne doit jamais :
+Vérifier les fichiers suivis :
 
-- être envoyée dans GitHub ;
-- être copiée dans le dossier du projet ;
+```bash
+git ls-files
+```
+
+---
+
+## 12.3 Clés SSH
+
+Une clé privée SSH doit rester privée.
+
+Elle ne doit jamais :
+
+- être ajoutée au dépôt ;
+- être publiée sur GitHub ;
+- être ajoutée dans un ticket ;
 - être envoyée par mail ;
-- être ajoutée à un ticket ;
-- être ajoutée à un fichier versionné ;
-- être affichée dans un terminal partagé.
+- être copiée dans le répertoire du projet ;
+- être incluse directement dans un fichier de configuration versionné.
 
-## En cas de fuite d'une clé
+---
 
-Une clé privée publiée doit être considérée comme **compromise**.
+## 12.4 En cas de fuite d'une clé
 
-Il faut :
+Si une clé privée est accidentellement publiée :
 
-1. créer une nouvelle clé ;
-2. retirer l'ancienne clé des services concernés ;
-3. mettre à jour les serveurs ou services qui l'utilisent ;
-4. nettoyer l'historique Git si nécessaire ;
-5. vérifier que la clé n'est plus présente dans le dépôt.
+1. considérer immédiatement la clé comme compromise ;
+2. créer une nouvelle clé ;
+3. retirer l'ancienne clé des services concernés ;
+4. mettre à jour les systèmes qui l'utilisent ;
+5. nettoyer l'historique Git si nécessaire ;
+6. vérifier que la clé n'est plus présente dans le dépôt.
+
+Supprimer simplement le fichier avec :
+
+```bash
+git rm <fichier>
+```
+
+ne suffit pas si la clé a déjà été commitée.
+
+---
+
+## 12.5 Données de production
+
+Le dépôt Git doit contenir le code, pas les données de production.
+
+Architecture recommandée :
+
+```text
+GitHub
+  │
+  └── Code source
+
+VM
+  ├── Application
+  ├── Environnement Python
+  └── Données locales
+```
 
 ---
 
@@ -639,28 +866,39 @@ Il faut :
 
 ## L'application ne répond pas
 
+Vérifier le service :
+
 ```bash
-sudo systemctl status copubli-dri
+sudo systemctl status <COPUBLI_SERVICE>
+```
+
+Consulter les logs :
+
+```bash
+sudo journalctl -u <COPUBLI_SERVICE> -n 100 --no-pager
+```
+
+Tester directement l'application :
+
+```bash
+curl http://127.0.0.1:<COPUBLI_PORT>
+```
+
+Si l'application répond localement mais pas depuis le navigateur, vérifier Nginx.
+
+---
+
+## Nginx ne fonctionne pas
+
+Tester :
+
+```bash
+sudo nginx -t
 ```
 
 Puis :
 
 ```bash
-sudo journalctl -u copubli-dri -n 100 --no-pager
-```
-
-Tester directement :
-
-```bash
-curl http://127.0.0.1:8050
-```
-
-Si l'application répond localement mais pas via le navigateur, vérifier Nginx.
-
-## Nginx
-
-```bash
-sudo nginx -t
 sudo systemctl status nginx
 ```
 
@@ -670,27 +908,39 @@ Logs :
 sudo journalctl -u nginx -n 100 --no-pager
 ```
 
-## GitHub / SSH
+---
+
+## GitHub refuse l'accès SSH
+
+Tester :
 
 ```bash
 ssh -T git@github.com
 ```
 
-Vérifier la clé utilisée :
+Vérifier la configuration :
 
 ```bash
 ssh -G github.com | grep -i identityfile
 ```
 
-Vérifier son empreinte :
+Vérifier l'empreinte :
 
 ```bash
-ssh-keygen -lf ~/.ssh/github_pocdatalake
+ssh-keygen -lf ~/.ssh/<GITHUB_SSH_KEY>
 ```
+
+Pour un diagnostic détaillé :
+
+```bash
+ssh -vT git@github.com
+```
+
+Éviter de publier les sorties contenant des informations sensibles.
 
 ---
 
-# 14. Organisation des fichiers
+# 14. Organisation du projet
 
 Structure indicative :
 
@@ -706,6 +956,10 @@ copublication-dashboard-dri/
 ├── .gitignore
 │
 ├── assets/
+│   ├── custom.css
+│   ├── dark-mode.css
+│   ├── dependencies.html
+│   └── ...
 │
 ├── layouts/
 │   ├── __init__.py
@@ -720,7 +974,7 @@ copublication-dashboard-dri/
 └── scripts / fichiers auxiliaires
 ```
 
-Les données locales ne doivent pas être incluses dans cette structure Git publiée.
+Les fichiers de données de production ne doivent pas apparaître dans cette structure Git publique.
 
 ---
 
@@ -729,7 +983,7 @@ Les données locales ne doivent pas être incluses dans cette structure Git publ
 Créer une branche :
 
 ```bash
-git checkout -b feature/ma-fonctionnalite
+git checkout -b feature/<FEATURE_NAME>
 ```
 
 Développer et tester localement.
@@ -744,30 +998,33 @@ git diff
 Ajouter uniquement les fichiers nécessaires :
 
 ```bash
-git add app.py callbacks.py data.py
+git add <FILE_1> <FILE_2>
 ```
 
 Créer le commit :
 
 ```bash
-git commit -m "Ajout de ma fonctionnalité"
+git commit -m "Description de la modification"
 ```
 
-Publier :
+Publier la branche :
 
 ```bash
-git push -u origin feature/ma-fonctionnalite
+git push -u origin feature/<FEATURE_NAME>
 ```
+
+Les modifications peuvent ensuite être intégrées dans `main` selon le processus de revue utilisé par l'équipe.
 
 ---
 
-# Auteur et équipe
+# 16. Auteur et équipe
 
-**Andréa NEBOT**  
-*Data Analyst / Scientist*  
-*Membre de l'équipe DATALAKE*
+## Andréa NEBOT
 
-CoPubli DRI a été développé pour fournir une interface de visualisation et d'analyse des copublications scientifiques dans le contexte des activités de l'Inria DataLake.
+**Data Analyst / Scientist**  
+**Membre de l'équipe DATALAKE**
+
+CoPubli DRI a été créé dans le cadre des activités de l'équipe DATALAKE afin de faciliter l'exploration, l'analyse et la visualisation des copublications et collaborations scientifiques.
 
 ---
 
@@ -779,6 +1036,8 @@ CoPubli DRI a été développé pour fournir une interface de visualisation et d
 
 > **SSH = clés privées uniquement sur les machines qui en ont besoin.**
 
-> **Nginx = point d'entrée HTTP/HTTPS et reverse proxy vers Dash.**
+> **Nginx = reverse proxy et point d'entrée HTTP/HTTPS.**
 
-> **Ne jamais versionner les données de production ni les secrets.**
+> **Les données de production ne doivent jamais être versionnées.**
+
+> **Les secrets et clés privées ne doivent jamais être publiés.**
